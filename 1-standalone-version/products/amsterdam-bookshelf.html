@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amsterdam Bookshelf - Custom Furniture</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../product-config.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1><a href="../index.html" data-translate="site.logo">Wood Kits</a></h1>
+            </div>
+            <nav class="nav">
+                <div class="language-selector">
+                    <select id="languageSelect">
+                        <option value="en">English</option>
+                        <option value="he">עברית</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="../index.html" class="nav-link" data-translate="navigation.home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../cart.html" class="nav-link" data-translate="navigation.cart">Cart</a>
+                    </li>
+                </ul>
+                <div class="nav-icons">
+                    <a href="../cart.html" class="cart-icon" id="cartIcon">🛒</a>
+                    <button class="admin-btn" id="adminBtn">⚙️</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="product-config">
+                <div class="product-info">
+                    <div class="product-image-large">
+                        <div class="placeholder-image-large">📖</div>
+                    </div>
+                    <div class="product-details">
+                        <h1 data-translate="products.amsterdam_bookshelf.title">Amsterdam Bookshelf</h1>
+                        <p class="product-description" data-translate="products.amsterdam_bookshelf.description">
+                            Modern bookshelf design with clean lines and minimalist aesthetics. 
+                            Configure all dimensions to create the perfect storage solution for your space. 
+                            Crafted from premium wood with optional lacquer finish.
+                        </p>
+                        
+                        <div class="price-display">
+                            <span class="current-price" id="currentPrice">₪129.00</span>
+                            <span class="price-note" data-translate="product_config.price_updates">Price updates as you customize</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="configuration-panel">
+                    <h2><span data-translate="product_config.customize">Customize Your</span> <span data-translate="products.amsterdam_bookshelf.title">Amsterdam Bookshelf</span></h2>
+                    
+                    <div class="config-grid">
+                        <div class="config-group">
+                            <label for="length"><span data-translate="product_config.length">Length:</span> <span id="lengthValue">100</span> <span data-translate="product_config.cm">cm</span></label>
+                            <input type="range" id="length" min="40" max="280" value="100" step="5" class="slider">
+                            <div class="range-info"><span data-translate="product_config.range">Range:</span> 40-280 <span data-translate="product_config.cm">cm</span></div>
+                        </div>
+
+                        <div class="config-group">
+                            <label for="width"><span data-translate="product_config.width">Width:</span> <span id="widthValue">30</span> <span data-translate="product_config.cm">cm</span></label>
+                            <input type="range" id="width" min="25" max="65" value="30" step="2" class="slider">
+                            <div class="range-info"><span data-translate="product_config.range">Range:</span> 25-65 <span data-translate="product_config.cm">cm</span></div>
+                        </div>
+
+                        <div class="config-group">
+                            <label for="height"><span data-translate="product_config.height">Height:</span> <span id="heightValue">170</span> <span data-translate="product_config.cm">cm</span></label>
+                            <input type="range" id="height" min="70" max="220" value="170" step="5" class="slider">
+                            <div class="range-info"><span data-translate="product_config.range">Range:</span> 70-220 <span data-translate="product_config.cm">cm</span></div>
+                        </div>
+
+                        <div class="config-group">
+                            <label for="depth"><span data-translate="product_config.depth">Depth:</span> <span id="depthValue">28</span> <span data-translate="product_config.cm">cm</span></label>
+                            <input type="range" id="depth" min="18" max="45" value="28" step="2" class="slider">
+                            <div class="range-info"><span data-translate="product_config.range">Range:</span> 18-45 <span data-translate="product_config.cm">cm</span></div>
+                        </div>
+
+                        <div class="config-group full-width">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="lacquer">
+                                <span class="checkbox-custom"></span>
+                                <span data-translate="product_config.add_lacquer">Add Lacquer Finish</span> (+₪22.00)
+                            </label>
+                            <div class="option-description">Protective and beautiful lacquer coating</div>
+                        </div>
+                    </div>
+
+                    <div class="price-breakdown">
+                        <h3 data-translate="product_config.price_breakdown">Price Breakdown</h3>
+                        <div class="breakdown-item">
+                            <span data-translate="product_config.base_price">Base Price:</span>
+                            <span id="basePrice">₪129.00</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span data-translate="product_config.size_adjustment">Size Adjustment:</span>
+                            <span id="sizeAdjustment">₪0.00</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span data-translate="product_config.lacquer_finish">Lacquer Finish:</span>
+                            <span id="lacquerPrice">₪0.00</span>
+                        </div>
+                        <div class="breakdown-total">
+                            <span data-translate="product_config.total">Total:</span>
+                            <span id="totalPrice">₪129.00</span>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="add-to-cart-btn" id="addToCartBtn" data-translate="product_config.add_to_cart">Add to Cart</button>
+                        <button class="save-config-btn" id="saveConfigBtn" data-translate="product_config.save_config">Save Configuration</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p data-translate="footer.copyright">&copy; 2024 Wood Kits. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../translations-inline.js"></script>
+    <script src="../product-configurator.js"></script>
+    <script>
+        // Initialize Amsterdam Bookshelf configurator
+        const configurator = new ProductConfigurator('amsterdam-bookshelf', {
+            basePrice: 129,
+            dimensions: {
+                length: { min: 40, max: 280, default: 100, multiplier: 0.4 },
+                width: { min: 25, max: 65, default: 30, multiplier: 1.0 },
+                height: { min: 70, max: 220, default: 170, multiplier: 0.25 },
+                depth: { min: 18, max: 45, default: 28, multiplier: 0.7 }
+            },
+            lacquerPrice: 22
+        });
+    </script>
+</body>
+</html>

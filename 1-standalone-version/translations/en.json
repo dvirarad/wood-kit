@@ -1,0 +1,64 @@
+{
+  "site": {
+    "title": "Wood Kits - DIY Wooden Construction Kits",
+    "logo": "Wood Kits"
+  },
+  "navigation": {
+    "diy_kits": "DIY Kits",
+    "raw_materials": "Raw Materials",
+    "by_use": "By Use",
+    "about": "About",
+    "planters_garden_beds": "Planters & Garden Beds",
+    "shelving_units": "Shelving Units",
+    "benches_seating": "Benches & Seating",
+    "storage_solutions": "Storage Solutions",
+    "wood_boards": "Wood Boards",
+    "hardware_fasteners": "Hardware & Fasteners",
+    "tools_accessories": "Tools & Accessories",
+    "garden_outdoor": "Garden & Outdoor",
+    "home_indoor": "Home & Indoor",
+    "storage_organization": "Storage & Organization"
+  },
+  "hero": {
+    "title": "Premium DIY Wooden Construction Kits",
+    "subtitle": "Create beautiful, functional pieces for your home and garden with our easy-to-assemble wooden kits."
+  },
+  "products": {
+    "featured_title": "Featured Products",
+    "add_to_cart": "Add to Cart",
+    "added": "Added!",
+    "raised_garden_bed": {
+      "title": "Raised Garden Bed Kit",
+      "description": "Complete kit for building a 4x4 raised garden bed. Includes pre-cut cedar boards and hardware.",
+      "price": "$89.99"
+    },
+    "wall_shelf": {
+      "title": "Wall Mounted Shelf Kit",
+      "description": "Stylish floating shelf kit with hidden brackets. Perfect for displaying books and decor.",
+      "price": "$34.99"
+    },
+    "garden_bench": {
+      "title": "Garden Bench Kit",
+      "description": "Classic wooden bench kit for your garden or patio. Weather-resistant treated lumber.",
+      "price": "$124.99"
+    },
+    "storage_box": {
+      "title": "Storage Box Kit",
+      "description": "Versatile wooden storage box with hinged lid. Great for tools, toys, or outdoor cushions.",
+      "price": "$67.99"
+    },
+    "planter_box": {
+      "title": "Planter Box Kit",
+      "description": "Decorative planter box kit for herbs and small plants. Includes drainage system.",
+      "price": "$45.99"
+    },
+    "tool_rack": {
+      "title": "Tool Rack Kit",
+      "description": "Wall-mounted tool organization system. Keep your workshop tidy and tools accessible.",
+      "price": "$56.99"
+    }
+  },
+  "footer": {
+    "copyright": "© 2024 Wood Kits. All rights reserved."
+  }
+}

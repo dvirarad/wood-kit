@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.avivhegia.co.il)",
+      "Bash(npx create-react-app:*)",
+      "Bash(npm install:*)",
+      "Bash(npm start:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(rm:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(node:*)",
+      "Bash(echo $PATH)",
+      "Bash(npx tsc:*)",
+      "Bash(bash:*)",
+      "Bash(npm:*)",
+      "Bash(./start-backend.sh:*)",
+      "Bash(chmod:*)",
+      "Bash(./test-suite.sh:*)",
+      "Bash(git init:*)",
+      "Bash(git --version)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ],
+    "deny": []
+  }
+}

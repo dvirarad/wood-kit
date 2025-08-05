@@ -1,0 +1,289 @@
+/* About Page Styles */
+
+.about-page {
+    padding: 2rem 0;
+}
+
+.about-hero {
+    text-align: center;
+    margin-bottom: 4rem;
+    padding: 3rem 0;
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+    color: white;
+    border-radius: 16px;
+}
+
+.about-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.about-subtitle {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+.about-content {
+    margin-bottom: 4rem;
+}
+
+.about-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    margin-bottom: 4rem;
+    padding: 2rem 0;
+}
+
+.about-section.reverse {
+    direction: rtl;
+}
+
+.about-section.reverse .about-text {
+    direction: ltr;
+}
+
+.about-text h2 {
+    color: #8B4513;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.about-text p {
+    color: #555;
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+.about-image {
+    text-align: center;
+}
+
+.placeholder-image {
+    width: 200px;
+    height: 200px;
+    background: #f8f8f8;
+    border: 2px solid #ddd;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.about-values {
+    background: #f8f8f8;
+    padding: 3rem;
+    border-radius: 16px;
+    margin-bottom: 4rem;
+}
+
+.about-values h2 {
+    text-align: center;
+    color: #8B4513;
+    font-size: 2.2rem;
+    margin-bottom: 2.5rem;
+    font-weight: 600;
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.value-item {
+    text-align: center;
+    background: white;
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.value-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.value-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.value-item h3 {
+    color: #8B4513;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.value-item p {
+    color: #666;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.about-contact {
+    background: white;
+    border: 2px solid #8B4513;
+    border-radius: 16px;
+    padding: 3rem;
+    text-align: center;
+}
+
+.about-contact h2 {
+    color: #8B4513;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.about-contact p {
+    color: #666;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.contact-info {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+}
+
+.contact-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.contact-item strong {
+    color: #8B4513;
+    font-weight: 600;
+}
+
+.contact-item span {
+    color: #555;
+}
+
+/* RTL Support */
+.rtl .about-hero {
+    direction: rtl;
+}
+
+.rtl .about-section {
+    direction: rtl;
+}
+
+.rtl .about-section.reverse {
+    direction: ltr;
+}
+
+.rtl .about-section.reverse .about-text {
+    direction: rtl;
+}
+
+.rtl .about-values {
+    direction: rtl;
+}
+
+.rtl .about-contact {
+    direction: rtl;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .about-hero {
+        padding: 2rem 1rem;
+        margin-bottom: 3rem;
+    }
+    
+    .about-hero h1 {
+        font-size: 2.2rem;
+    }
+    
+    .about-subtitle {
+        font-size: 1rem;
+    }
+    
+    .about-section {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    
+    .about-section.reverse {
+        direction: ltr;
+    }
+    
+    .placeholder-image {
+        width: 150px;
+        height: 150px;
+        font-size: 3rem;
+    }
+    
+    .about-values {
+        padding: 2rem 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .values-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .about-contact {
+        padding: 2rem 1.5rem;
+    }
+    
+    .contact-info {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-page {
+        padding: 1rem 0;
+    }
+    
+    .about-hero {
+        padding: 1.5rem 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .about-hero h1 {
+        font-size: 1.8rem;
+    }
+    
+    .about-text h2 {
+        font-size: 1.5rem;
+    }
+    
+    .about-text p {
+        font-size: 1rem;
+    }
+    
+    .about-values h2 {
+        font-size: 1.8rem;
+    }
+    
+    .value-item {
+        padding: 1.5rem 1rem;
+    }
+    
+    .about-contact h2 {
+        font-size: 1.6rem;
+    }
+}

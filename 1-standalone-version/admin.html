@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Wood Kits</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1><a href="index.html">Wood Kits</a></h1>
+            </div>
+            <nav class="nav">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" id="logoutBtn">Logout</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="admin-dashboard">
+                <h1>Admin Dashboard</h1>
+                
+                <div class="admin-tabs">
+                    <button class="tab-btn active" onclick="showTab('pricing')">Pricing Management</button>
+                    <button class="tab-btn" onclick="showTab('orders')">Orders</button>
+                    <button class="tab-btn" onclick="showTab('products')">Product Settings</button>
+                </div>
+
+                <!-- Pricing Management Tab -->
+                <div class="tab-content active" id="pricing-tab">
+                    <h2>Pricing Configuration</h2>
+                    
+                    <div class="product-pricing-grid">
+                        <!-- Venice Bookshelf -->
+                        <div class="pricing-card">
+                            <h3>Venice Bookshelf</h3>
+                            <div class="pricing-form">
+                                <div class="form-group">
+                                    <label>Base Price ($)</label>
+                                    <input type="number" id="venice-base" value="149" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Length Multiplier</label>
+                                    <input type="number" id="venice-length" value="0.5" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Width Multiplier</label>
+                                    <input type="number" id="venice-width" value="1.2" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Height Multiplier</label>
+                                    <input type="number" id="venice-height" value="0.3" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Depth Multiplier</label>
+                                    <input type="number" id="venice-depth" value="0.8" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Lacquer Price ($)</label>
+                                    <input type="number" id="venice-lacquer" value="25" step="0.01">
+                                </div>
+                                <button class="save-btn" onclick="savePricing('venice-bookshelf')">Save</button>
+                            </div>
+                        </div>
+
+                        <!-- Amsterdam Bookshelf -->
+                        <div class="pricing-card">
+                            <h3>Amsterdam Bookshelf</h3>
+                            <div class="pricing-form">
+                                <div class="form-group">
+                                    <label>Base Price ($)</label>
+                                    <input type="number" id="amsterdam-base" value="129" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Length Multiplier</label>
+                                    <input type="number" id="amsterdam-length" value="0.4" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Width Multiplier</label>
+                                    <input type="number" id="amsterdam-width" value="1.0" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Height Multiplier</label>
+                                    <input type="number" id="amsterdam-height" value="0.25" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Depth Multiplier</label>
+                                    <input type="number" id="amsterdam-depth" value="0.7" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Lacquer Price ($)</label>
+                                    <input type="number" id="amsterdam-lacquer" value="22" step="0.01">
+                                </div>
+                                <button class="save-btn" onclick="savePricing('amsterdam-bookshelf')">Save</button>
+                            </div>
+                        </div>
+
+                        <!-- Stairs -->
+                        <div class="pricing-card">
+                            <h3>Custom Stairs</h3>
+                            <div class="pricing-form">
+                                <div class="form-group">
+                                    <label>Base Price ($)</label>
+                                    <input type="number" id="stairs-base" value="299" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Length Multiplier</label>
+                                    <input type="number" id="stairs-length" value="2.0" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Width Multiplier</label>
+                                    <input type="number" id="stairs-width" value="1.5" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Steps Multiplier</label>
+                                    <input type="number" id="stairs-steps" value="15" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Handrail Price ($)</label>
+                                    <input type="number" id="stairs-handrail" value="75" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Lacquer Price ($)</label>
+                                    <input type="number" id="stairs-lacquer" value="45" step="0.01">
+                                </div>
+                                <button class="save-btn" onclick="savePricing('stairs')">Save</button>
+                            </div>
+                        </div>
+
+                        <!-- Garden Bench -->
+                        <div class="pricing-card">
+                            <h3>Garden Bench</h3>
+                            <div class="pricing-form">
+                                <div class="form-group">
+                                    <label>Base Price ($)</label>
+                                    <input type="number" id="bench-base" value="179" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Length Multiplier</label>
+                                    <input type="number" id="bench-length" value="0.8" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Width Multiplier</label>
+                                    <input type="number" id="bench-width" value="1.0" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Height Multiplier</label>
+                                    <input type="number" id="bench-height" value="0.5" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Lacquer Price ($)</label>
+                                    <input type="number" id="bench-lacquer" value="30" step="0.01">
+                                </div>
+                                <button class="save-btn" onclick="savePricing('garden-bench')">Save</button>
+                            </div>
+                        </div>
+
+                        <!-- Wooden Planter -->
+                        <div class="pricing-card">
+                            <h3>Wooden Planter</h3>
+                            <div class="pricing-form">
+                                <div class="form-group">
+                                    <label>Base Price ($)</label>
+                                    <input type="number" id="planter-base" value="89" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Length Multiplier</label>
+                                    <input type="number" id="planter-length" value="0.6" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Height Multiplier</label>
+                                    <input type="number" id="planter-height" value="0.4" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Lacquer Price ($)</label>
+                                    <input type="number" id="planter-lacquer" value="18" step="0.01">
+                                </div>
+                                <button class="save-btn" onclick="savePricing('wooden-planter')">Save</button>
+                            </div>
+                        </div>
+
+                        <!-- Dog Bed -->
+                        <div class="pricing-card">
+                            <h3>Dog Bed</h3>
+                            <div class="pricing-form">
+                                <div class="form-group">
+                                    <label>Base Price ($)</label>
+                                    <input type="number" id="dogbed-base" value="119" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Length Multiplier</label>
+                                    <input type="number" id="dogbed-length" value="0.7" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Width Multiplier</label>
+                                    <input type="number" id="dogbed-width" value="0.9" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Height Multiplier</label>
+                                    <input type="number" id="dogbed-height" value="0.3" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Lacquer Price ($)</label>
+                                    <input type="number" id="dogbed-lacquer" value="20" step="0.01">
+                                </div>
+                                <button class="save-btn" onclick="savePricing('dog-bed')">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders Tab -->
+                <div class="tab-content" id="orders-tab">
+                    <h2>Order Management</h2>
+                    <div class="orders-container" id="ordersContainer">
+                        <p>Loading orders...</p>
+                    </div>
+                </div>
+
+                <!-- Product Settings Tab -->
+                <div class="tab-content" id="products-tab">
+                    <h2>Product Settings</h2>
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3>General Settings</h3>
+                            <div class="form-group">
+                                <label>Tax Rate (%)</label>
+                                <input type="number" id="tax-rate" value="10" step="0.1" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Currency Symbol</label>
+                                <input type="text" id="currency-symbol" value="$">
+                            </div>
+                            <button class="save-btn" onclick="saveGeneralSettings()">Save Settings</button>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3>Email Configuration</h3>
+                            <div class="form-group">
+                                <label>Email Service API Key</label>
+                                <input type="password" id="email-api-key" placeholder="Enter API key">
+                            </div>
+                            <div class="form-group">
+                                <label>From Email</label>
+                                <input type="email" id="from-email" value="orders@woodkits.com">
+                            </div>
+                            <button class="save-btn" onclick="saveEmailSettings()">Save Email Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Wood Kits. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="admin.js"></script>
+</body>
+</html>

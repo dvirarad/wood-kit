@@ -1,0 +1,64 @@
+{
+  "site": {
+    "title": "Kits de Madera - Kits de Construcción DIY",
+    "logo": "Kits de Madera"
+  },
+  "navigation": {
+    "diy_kits": "Kits DIY",
+    "raw_materials": "Materiales",
+    "by_use": "Por Uso",
+    "about": "Acerca de",
+    "planters_garden_beds": "Jardineras y Canteros",
+    "shelving_units": "Estanterías",
+    "benches_seating": "Bancos y Asientos",
+    "storage_solutions": "Soluciones de Almacenamiento",
+    "wood_boards": "Tablones de Madera",
+    "hardware_fasteners": "Herrajes y Sujetadores",
+    "tools_accessories": "Herramientas y Accesorios",
+    "garden_outdoor": "Jardín y Exterior",
+    "home_indoor": "Hogar e Interior",
+    "storage_organization": "Almacenamiento y Organización"
+  },
+  "hero": {
+    "title": "Kits Premium de Construcción en Madera DIY",
+    "subtitle": "Crea piezas hermosas y funcionales para tu hogar y jardín con nuestros kits de madera fáciles de ensamblar."
+  },
+  "products": {
+    "featured_title": "Productos Destacados",
+    "add_to_cart": "Añadir al Carrito",
+    "added": "¡Añadido!",
+    "raised_garden_bed": {
+      "title": "Kit Cantero Elevado",
+      "description": "Kit completo para construir un cantero elevado de 4x4. Incluye tablones de cedro precortados y herrajes.",
+      "price": "$89.99"
+    },
+    "wall_shelf": {
+      "title": "Kit Estante de Pared",
+      "description": "Kit de estante flotante elegante con soportes ocultos. Perfecto para mostrar libros y decoración.",
+      "price": "$34.99"
+    },
+    "garden_bench": {
+      "title": "Kit Banco de Jardín",
+      "description": "Kit de banco de madera clásico para tu jardín o patio. Madera tratada resistente a la intemperie.",
+      "price": "$124.99"
+    },
+    "storage_box": {
+      "title": "Kit Caja de Almacenamiento",
+      "description": "Caja de almacenamiento de madera versátil con tapa con bisagras. Ideal para herramientas, juguetes o cojines exteriores.",
+      "price": "$67.99"
+    },
+    "planter_box": {
+      "title": "Kit Jardinera",
+      "description": "Kit de jardinera decorativa para hierbas y plantas pequeñas. Incluye sistema de drenaje.",
+      "price": "$45.99"
+    },
+    "tool_rack": {
+      "title": "Kit Organizador de Herramientas",
+      "description": "Sistema de organización de herramientas montado en pared. Mantén tu taller ordenado y las herramientas accesibles.",
+      "price": "$56.99"
+    }
+  },
+  "footer": {
+    "copyright": "© 2024 Kits de Madera. Todos los derechos reservados."
+  }
+}

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wooden Planter - Custom Furniture</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../product-config.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1><a href="../index.html" data-translate="site.logo">Wood Kits</a></h1>
+            </div>
+            <nav class="nav">
+                <div class="language-selector">
+                    <select id="languageSelect">
+                        <option value="en">English</option>
+                        <option value="he">עברית</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="../index.html" class="nav-link" data-translate="navigation.home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../cart.html" class="nav-link" data-translate="navigation.cart">Cart</a>
+                    </li>
+                </ul>
+                <div class="nav-icons">
+                    <a href="../cart.html" class="cart-icon" id="cartIcon">🛒</a>
+                    <button class="admin-btn" id="adminBtn">⚙️</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="product-config">
+                <div class="product-info">
+                    <div class="product-image-large">
+                        <div class="placeholder-image-large">🌱</div>
+                    </div>
+                    <div class="product-details">
+                        <h1 data-translate="products.wooden_planter.title">Wooden Planter</h1>
+                        <p class="product-description" data-translate="products.wooden_planter.description">
+                            Custom wooden planter perfect for your garden, patio, or balcony. 
+                            Built with drainage system and weather-resistant materials. 
+                            Configure length and height to suit your plants and space.
+                        </p>
+                        
+                        <div class="price-display">
+                            <span class="current-price" id="currentPrice">₪89.00</span>
+                            <span class="price-note" data-translate="product_config.price_updates">Price updates as you customize</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="configuration-panel">
+                    <h2><span data-translate="product_config.customize">Customize Your</span> <span data-translate="products.wooden_planter.title">Wooden Planter</span></h2>
+                    
+                    <div class="config-grid">
+                        <div class="config-group">
+                            <label for="length"><span data-translate="product_config.length">Length:</span> <span id="lengthValue">80</span> <span data-translate="product_config.cm">cm</span></label>
+                            <input type="range" id="length" min="30" max="150" value="80" step="5" class="slider">
+                            <div class="range-info"><span data-translate="product_config.range">Range:</span> 30-150 <span data-translate="product_config.cm">cm</span></div>
+                        </div>
+
+                        <div class="config-group">
+                            <label for="height"><span data-translate="product_config.height">Height:</span> <span id="heightValue">40</span> <span data-translate="product_config.cm">cm</span></label>
+                            <input type="range" id="height" min="20" max="80" value="40" step="5" class="slider">
+                            <div class="range-info"><span data-translate="product_config.range">Range:</span> 20-80 <span data-translate="product_config.cm">cm</span></div>
+                        </div>
+
+                        <div class="config-group full-width">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="lacquer">
+                                <span class="checkbox-custom"></span>
+                                <span data-translate="product_config.add_lacquer">Add Lacquer Finish</span> (+₪18.00)
+                            </label>
+                            <div class="option-description">Enhanced weather protection and longer lifespan</div>
+                        </div>
+                    </div>
+
+                    <div class="price-breakdown">
+                        <h3 data-translate="product_config.price_breakdown">Price Breakdown</h3>
+                        <div class="breakdown-item">
+                            <span data-translate="product_config.base_price">Base Price:</span>
+                            <span id="basePrice">₪89.00</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span data-translate="product_config.size_adjustment">Size Adjustment:</span>
+                            <span id="sizeAdjustment">₪0.00</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span data-translate="product_config.lacquer_finish">Lacquer Finish:</span>
+                            <span id="lacquerPrice">₪0.00</span>
+                        </div>
+                        <div class="breakdown-total">
+                            <span data-translate="product_config.total">Total:</span>
+                            <span id="totalPrice">₪89.00</span>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="add-to-cart-btn" id="addToCartBtn" data-translate="product_config.add_to_cart">Add to Cart</button>
+                        <button class="save-config-btn" id="saveConfigBtn" data-translate="product_config.save_config">Save Configuration</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p data-translate="footer.copyright">&copy; 2024 Wood Kits. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="../translations-inline.js"></script>
+    <script src="../product-configurator.js"></script>
+    <script>
+        // Initialize Wooden Planter configurator
+        const configurator = new ProductConfigurator('wooden-planter', {
+            basePrice: 89,
+            dimensions: {
+                length: { min: 30, max: 150, default: 80, multiplier: 0.6 },
+                height: { min: 20, max: 80, default: 40, multiplier: 0.4 }
+            },
+            lacquerPrice: 18
+        });
+    </script>
+</body>
+</html>

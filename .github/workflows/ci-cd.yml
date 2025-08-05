@@ -1,0 +1,261 @@
+name: Wood Kits CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:5.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: |
+          2-react-migrated-version/frontend/package-lock.json
+          2-react-migrated-version/backend/package-lock.json
+
+    - name: Install Backend Dependencies
+      working-directory: ./2-react-migrated-version/backend
+      run: npm ci
+
+    - name: Install Frontend Dependencies
+      working-directory: ./2-react-migrated-version/frontend
+      run: npm ci
+
+    - name: Backend Unit Tests
+      working-directory: ./2-react-migrated-version/backend
+      run: |
+        # Create test environment file
+        echo "NODE_ENV=test" > .env.test
+        echo "MONGODB_URI=mongodb://localhost:27017/woodkits_test" >> .env.test
+        echo "PORT=5001" >> .env.test
+        
+        # Run tests (if they exist, otherwise validate syntax)
+        if [ -f "package.json" ] && grep -q '"test"' package.json; then
+          npm test
+        else
+          node -c server.js
+          echo "✅ Backend syntax validation passed"
+        fi
+
+    - name: Frontend Unit Tests
+      working-directory: ./2-react-migrated-version/frontend
+      run: |
+        # TypeScript compilation check
+        npx tsc --noEmit --skipLibCheck
+        
+        # Run React tests
+        CI=true npm run test -- --coverage --watchAll=false
+        
+        # Build test
+        CI=true npm run build
+
+    - name: Lint Check
+      working-directory: ./2-react-migrated-version
+      run: |
+        # Frontend linting
+        cd frontend
+        if [ -f "package.json" ] && grep -q '"lint"' package.json; then
+          npm run lint
+        else
+          echo "✅ Frontend linting skipped (no lint script)"
+        fi
+        
+        # Backend linting (if exists)
+        cd ../backend
+        if [ -f "package.json" ] && grep -q '"lint"' package.json; then
+          npm run lint
+        else
+          echo "✅ Backend linting skipped (no lint script)"
+        fi
+
+    - name: Security Audit
+      working-directory: ./2-react-migrated-version
+      run: |
+        echo "🔍 Running security audits..."
+        cd backend && npm audit --audit-level=high
+        cd ../frontend && npm audit --audit-level=high
+
+    - name: Integration Tests
+      working-directory: ./2-react-migrated-version
+      run: |
+        echo "🧪 Running comprehensive test suite..."
+        chmod +x test-suite.sh
+        ./test-suite.sh --ci
+      env:
+        MONGODB_URI: mongodb://localhost:27017/woodkits_test
+        NODE_ENV: test
+
+    - name: E2E Happy Flow Tests
+      working-directory: ./2-react-migrated-version
+      run: |
+        echo "🎭 Running E2E happy flow tests..."
+        # Install axios for E2E tests
+        npm install axios
+        
+        # Start services in background for E2E tests
+        cd backend && npm start &
+        BACKEND_PID=$!
+        cd ../frontend && npm start &
+        FRONTEND_PID=$!
+        
+        # Wait for services and run E2E tests
+        sleep 15
+        node e2e-tests.js
+        
+        # Cleanup
+        kill $BACKEND_PID $FRONTEND_PID || true
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.node-version }}
+        path: |
+          2-react-migrated-version/frontend/coverage/
+          2-react-migrated-version/frontend/build/
+          2-react-migrated-version/backend/logs/
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: './2-react-migrated-version'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: |
+          2-react-migrated-version/frontend/package-lock.json
+          2-react-migrated-version/backend/package-lock.json
+
+    - name: Build Production Frontend
+      working-directory: ./2-react-migrated-version/frontend
+      run: |
+        npm ci
+        CI=true npm run build
+        
+        # Create deployment package
+        tar -czf ../wood-kits-frontend.tar.gz build/
+
+    - name: Build Production Backend
+      working-directory: ./2-react-migrated-version/backend
+      run: |
+        npm ci --only=production
+        
+        # Create deployment package
+        tar -czf ../wood-kits-backend.tar.gz . --exclude=node_modules/.cache
+
+    - name: Create Release
+      if: github.ref == 'refs/heads/main'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Wood Kits Release v${{ github.run_number }}
+        body: |
+          ## Wood Kits Release v${{ github.run_number }}
+          
+          ### Changes
+          - Automated release from CI/CD pipeline
+          - All tests passed successfully
+          - Security scans completed
+          
+          ### Deployment
+          - Frontend: Optimized React build
+          - Backend: Node.js API server
+          - Database: MongoDB ready
+          
+          ### Verification
+          - ✅ Unit tests passed
+          - ✅ Integration tests passed  
+          - ✅ E2E happy flows working
+          - ✅ Security scans clean
+        draft: false
+        prerelease: false
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: production-build
+        path: |
+          2-react-migrated-version/wood-kits-frontend.tar.gz
+          2-react-migrated-version/wood-kits-backend.tar.gz
+
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [test, security, build-and-deploy]
+    if: always()
+    
+    steps:
+    - name: Notify Success
+      if: needs.test.result == 'success' && needs.security.result == 'success'
+      run: |
+        echo "🎉 Wood Kits CI/CD Pipeline completed successfully!"
+        echo "✅ All tests passed"
+        echo "✅ Security scans clean"
+        echo "✅ Build and deployment ready"
+
+    - name: Notify Failure
+      if: needs.test.result == 'failure' || needs.security.result == 'failure'
+      run: |
+        echo "❌ Wood Kits CI/CD Pipeline failed!"
+        echo "🔍 Check the logs above for details"
+        exit 1

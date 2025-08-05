@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translation Test</title>
+</head>
+<body>
+    <h1 data-translate="hero.title">Loading...</h1>
+    <p data-translate="hero.subtitle">Loading...</p>
+    <button id="testBtn">Test Translation</button>
+    
+    <script>
+        // Simple inline translation for testing
+        const testTranslations = {
+            en: {
+                hero: {
+                    title: "Premium DIY Wooden Construction Kits",
+                    subtitle: "Create beautiful, functional pieces for your home and garden with our easy-to-assemble wooden kits."
+                }
+            }
+        };
+        
+        function translateTest() {
+            const elements = document.querySelectorAll('[data-translate]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-translate');
+                const keys = key.split('.');
+                let translation = testTranslations.en;
+                
+                for (const k of keys) {
+                    if (translation && typeof translation === 'object' && k in translation) {
+                        translation = translation[k];
+                    } else {
+                        translation = null;
+                        break;
+                    }
+                }
+                
+                if (translation) {
+                    element.textContent = translation;
+                    console.log(`Translated ${key} to: ${translation}`);
+                } else {
+                    console.log(`No translation for: ${key}`);
+                }
+            });
+        }
+        
+        document.getElementById('testBtn').addEventListener('click', translateTest);
+        
+        // Auto-run on load
+        window.addEventListener('load', translateTest);
+    </script>
+</body>
+</html>

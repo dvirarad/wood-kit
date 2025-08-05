@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate="cart.title">Shopping Cart - Wood Kits</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="cart.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1><a href="index.html" data-translate="site.logo">Wood Kits</a></h1>
+            </div>
+            <nav class="nav">
+                <div class="language-selector">
+                    <select id="languageSelect">
+                        <option value="en">English</option>
+                        <option value="he">עברית</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link" data-translate="navigation.home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="cart.html" class="nav-link" data-translate="navigation.cart">Cart</a>
+                    </li>
+                </ul>
+                <div class="nav-icons">
+                    <a href="cart.html" class="cart-icon" id="cartIcon">🛒</a>
+                    <button class="admin-btn" id="adminBtn">⚙️</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="cart-page">
+                <h1 data-translate="cart.title">Shopping Cart</h1>
+                
+                <div class="cart-content" id="cartContent">
+                    <div class="empty-cart" id="emptyCart">
+                        <p data-translate="cart.empty">Your cart is empty</p>
+                        <a href="index.html" class="continue-shopping-btn" data-translate="cart.continue_shopping">Continue Shopping</a>
+                    </div>
+                </div>
+
+                <div class="cart-summary" id="cartSummary" style="display: none;">
+                    <div class="summary-section">
+                        <h2>Order Summary</h2>
+                        <div class="summary-line">
+                            <span data-translate="cart.subtotal">Subtotal:</span>
+                            <span id="subtotal">$0.00</span>
+                        </div>
+                        <div class="summary-line">
+                            <span data-translate="cart.tax">Tax (10%):</span>
+                            <span id="tax">$0.00</span>
+                        </div>
+                        <div class="summary-line total">
+                            <span data-translate="cart.total">Total:</span>
+                            <span id="total">$0.00</span>
+                        </div>
+                        <button class="checkout-btn" id="checkoutBtn" data-translate="cart.checkout">Proceed to Checkout</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkout Form Modal -->
+            <div class="checkout-modal" id="checkoutModal">
+                <div class="checkout-form">
+                    <h2 data-translate="cart.customer_info">Customer Information</h2>
+                    <form id="orderForm">
+                        <div class="form-group">
+                            <label for="customerName" data-translate="cart.full_name">Full Name *</label>
+                            <input type="text" id="customerName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customerEmail" data-translate="cart.email">Email *</label>
+                            <input type="email" id="customerEmail" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customerPhone" data-translate="cart.phone">Phone *</label>
+                            <input type="tel" id="customerPhone" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="customerAddress" data-translate="cart.address">Address *</label>
+                            <textarea id="customerAddress" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="orderNotes" data-translate="cart.special_instructions">Special Instructions (Optional)</label>
+                            <textarea id="orderNotes" rows="2" data-translate="cart.special_instructions_placeholder" placeholder="Any special requests or delivery instructions..."></textarea>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="button" class="cancel-btn" onclick="closeCheckoutModal()" data-translate="cart.cancel">Cancel</button>
+                            <button type="submit" class="submit-order-btn" data-translate="cart.submit_order">Submit Order</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p data-translate="footer.copyright">&copy; 2024 Wood Kits. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="api-service.js"></script>
+    <script src="translations-inline.js"></script>
+    <script src="cart.js"></script>
+</body>
+</html>
