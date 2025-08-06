@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Product = require('../models/Product');
+const Product = require('../models/ProductSimple');
 const { adminOnly } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { productValidation } = require('../validation/productValidation');
@@ -33,7 +33,6 @@ router.get('/', async (req, res) => {
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit))
-      .populate('reviews', 'rating createdAt')
       .lean();
 
     // Get total count for pagination
@@ -98,12 +97,6 @@ router.get('/:id', async (req, res) => {
     const query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { productId: id };
     
     const product = await Product.findOne(query)
-      .populate({
-        path: 'reviews',
-        match: { status: 'approved' },
-        select: 'rating text customer.name createdAt',
-        options: { sort: { createdAt: -1 }, limit: 10 }
-      })
       .lean();
 
     if (!product) {
