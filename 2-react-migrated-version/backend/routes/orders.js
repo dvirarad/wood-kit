@@ -51,12 +51,12 @@ router.post('/', validate(orderValidation.create), async (req, res) => {
       const processedItem = {
         product: product._id,
         productId: item.productId,
-        name: product.name[language] || product.name.en,
+        name: typeof product.name === 'string' ? product.name : (product.name[language] || product.name.en),
         configuration: item.configuration,
         pricing: {
           basePrice: pricing.basePrice,
           sizeAdjustment: pricing.sizeAdjustment,
-          optionsCost: pricing.optionsCost,
+          optionsCost: (pricing.colorCost || 0) + (pricing.lacquerCost || 0) + (pricing.handrailCost || 0),
           unitPrice: pricing.totalPrice
         },
         quantity: item.quantity || 1,

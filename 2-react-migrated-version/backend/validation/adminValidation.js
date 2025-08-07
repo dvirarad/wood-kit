@@ -17,6 +17,8 @@ const adminValidation = {
 
   updatePricing: Joi.object({
     body: Joi.object({
+      name: Joi.string().min(1).max(200),
+      description: Joi.string().min(1).max(1000),
       basePrice: Joi.number().min(0),
       dimensions: Joi.object({
         length: dimensionSchema,
@@ -33,8 +35,19 @@ const adminValidation = {
         handrail: Joi.object({
           available: Joi.boolean(),
           price: Joi.number().min(0)
+        }),
+        color: Joi.object({
+          available: Joi.boolean(),
+          choices: Joi.object().pattern(Joi.string(), Joi.number().min(0))
         })
-      })
+      }),
+      images: Joi.array().items(
+        Joi.object({
+          url: Joi.string().uri().required(),
+          alt: Joi.string().max(200),
+          isPrimary: Joi.boolean()
+        })
+      )
     })
   }),
 

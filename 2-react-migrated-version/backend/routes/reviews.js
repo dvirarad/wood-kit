@@ -6,6 +6,58 @@ const { optionalAuth } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { reviewValidation } = require('../validation/reviewValidation');
 
+// @desc    Get reviews (with optional productId filter)
+// @route   GET /api/v1/reviews
+// @access  Public
+router.get('/', async (req, res) => {
+  try {
+    const { 
+      productId,
+      language = 'en',
+      page = 1,
+      limit = 10,
+      sort = '-createdAt'
+    } = req.query;
+
+    // Build query
+    const query = { status: 'approved' };
+    if (productId) query.productId = productId;
+    if (language) query.language = language;
+
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Get reviews with pagination
+    const reviews = await Review.find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Get total count for pagination
+    const totalReviews = await Review.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: reviews,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: totalReviews,
+        pages: Math.ceil(totalReviews / parseInt(limit))
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching reviews:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching reviews',
+      error: error.message
+    });
+  }
+});
+
 // @desc    Get reviews for a product
 // @route   GET /api/v1/reviews/product/:productId
 // @access  Public
@@ -114,7 +166,7 @@ router.post('/', optionalAuth, validate(reviewValidation.create), async (req, re
       title,
       text,
       language,
-      status: 'pending', // Reviews need moderation by default
+      status: 'approved', // Auto-approve reviews
       metadata: {
         source: 'website',
         userAgent: req.get('User-Agent'),

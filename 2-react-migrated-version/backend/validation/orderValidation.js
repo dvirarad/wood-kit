@@ -22,13 +22,14 @@ const orderValidation = {
               steps: Joi.number().integer().min(1)
             }),
             options: Joi.object({
+              color: Joi.string().optional(),
               lacquer: Joi.boolean().default(false),
               handrail: Joi.boolean().default(false)
             })
           }).required()
         })
       ).min(1).required(),
-      notes: Joi.string().max(1000),
+      notes: Joi.string().allow('', null).optional(),
       language: Joi.string().valid('en', 'he', 'es').default('en')
     })
   }),

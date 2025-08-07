@@ -356,15 +356,23 @@ router.get('/dashboard', adminOnly, async (req, res) => {
   }
 });
 
-// @desc    Update product pricing (Admin only)
+// @desc    Update product pricing and details (Admin only)
 // @route   PUT /api/v1/admin/pricing/:productId
 // @access  Private/Admin
 router.put('/pricing/:productId', adminOnly, validate(adminValidation.updatePricing), async (req, res) => {
   try {
     const { productId } = req.params;
-    const { basePrice, dimensions, options } = req.body;
+    const { name, description, basePrice, dimensions, options, images } = req.body;
 
     const updateData = {};
+    
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    
+    if (description !== undefined) {
+      updateData.description = description;
+    }
     
     if (basePrice !== undefined) {
       updateData.basePrice = basePrice;
@@ -376,6 +384,10 @@ router.put('/pricing/:productId', adminOnly, validate(adminValidation.updatePric
     
     if (options) {
       updateData.options = options;
+    }
+    
+    if (images) {
+      updateData.images = images;
     }
 
     const product = await Product.findOneAndUpdate(
@@ -393,20 +405,23 @@ router.put('/pricing/:productId', adminOnly, validate(adminValidation.updatePric
 
     res.json({
       success: true,
-      message: 'Pricing updated successfully',
+      message: 'Product updated successfully',
       data: {
         productId: product.productId,
+        name: product.name,
+        description: product.description,
         basePrice: product.basePrice,
         dimensions: product.dimensions,
         options: product.options,
+        images: product.images,
         updatedAt: product.updatedAt
       }
     });
   } catch (error) {
-    console.error('Error updating pricing:', error);
+    console.error('Error updating product:', error);
     res.status(500).json({
       success: false,
-      message: 'Error updating pricing',
+      message: 'Error updating product',
       error: error.message
     });
   }
