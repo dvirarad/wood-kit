@@ -1,0 +1,153 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Run Tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          2-react-migrated-version/backend/package-lock.json
+          2-react-migrated-version/frontend/package-lock.json
+
+    - name: Install Backend Dependencies
+      run: |
+        cd 2-react-migrated-version/backend
+        npm ci
+
+    - name: Install Frontend Dependencies
+      run: |
+        cd 2-react-migrated-version/frontend
+        npm ci
+
+    - name: Run Backend Tests
+      run: |
+        cd 2-react-migrated-version/backend
+        npm test
+      env:
+        NODE_ENV: test
+        MONGODB_URI: ${{ secrets.MONGODB_URI_TEST || 'mongodb://localhost:27017/woodkits-test' }}
+
+    - name: Run Frontend Tests
+      run: |
+        cd 2-react-migrated-version/frontend
+        npm test -- --coverage --watchAll=false
+      env:
+        CI: true
+
+  deploy-backend:
+    needs: test
+    runs-on: ubuntu-latest
+    name: Deploy Backend to Render
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to Render
+      uses: johnbeynon/render-deploy-action@v0.0.8
+      with:
+        service-id: ${{ secrets.RENDER_BACKEND_SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
+        wait-for-success: true
+
+  deploy-frontend:
+    needs: [test, deploy-backend]
+    runs-on: ubuntu-latest
+    name: Deploy Frontend to Render
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: 2-react-migrated-version/frontend/package-lock.json
+
+    - name: Install Dependencies
+      run: |
+        cd 2-react-migrated-version/frontend
+        npm ci
+
+    - name: Build Frontend
+      run: |
+        cd 2-react-migrated-version/frontend
+        npm run build
+      env:
+        REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+        GENERATE_SOURCEMAP: false
+
+    - name: Deploy to Render
+      uses: johnbeynon/render-deploy-action@v0.0.8
+      with:
+        service-id: ${{ secrets.RENDER_FRONTEND_SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
+        wait-for-success: true
+
+  post-deploy:
+    needs: [deploy-backend, deploy-frontend]
+    runs-on: ubuntu-latest
+    name: Post Deployment Tasks
+    
+    steps:
+    - name: Seed Production Database
+      run: |
+        curl -X POST "${{ secrets.BACKEND_URL }}/api/v1/admin/seed" \
+          -H "Content-Type: application/json" \
+          -d '{"adminKey": "${{ secrets.ADMIN_SEED_KEY }}"}'
+      continue-on-error: true
+
+    - name: Health Check Backend
+      run: |
+        curl -f "${{ secrets.BACKEND_URL }}/health" || exit 1
+
+    - name: Health Check Frontend
+      run: |
+        curl -f "${{ secrets.FRONTEND_URL }}" || exit 1
+
+    - name: Notify Success
+      run: |
+        echo "🎉 Deployment successful!"
+        echo "Frontend: ${{ secrets.FRONTEND_URL }}"
+        echo "Backend: ${{ secrets.BACKEND_URL }}"
+        echo "API: ${{ secrets.BACKEND_URL }}/api/v1/products"
+
+  notify:
+    if: always()
+    needs: [test, deploy-backend, deploy-frontend, post-deploy]
+    runs-on: ubuntu-latest
+    name: Notify Deployment Status
+    
+    steps:
+    - name: Notify Success
+      if: ${{ needs.post-deploy.result == 'success' }}
+      run: |
+        echo "✅ Deployment completed successfully"
+        echo "🌐 Frontend: ${{ secrets.FRONTEND_URL }}"
+        echo "🖥️ Backend: ${{ secrets.BACKEND_URL }}"
+        
+    - name: Notify Failure
+      if: ${{ needs.test.result == 'failure' || needs.deploy-backend.result == 'failure' || needs.deploy-frontend.result == 'failure' }}
+      run: |
+        echo "❌ Deployment failed"
+        echo "Check the logs above for details"
+        exit 1
