@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
-const Product = require('../models/ProductSimple');
+const Product = require('../models/Product');
 const { adminOnly, optionalAuth } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { orderValidation } = require('../validation/orderValidation');

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Review = require('../models/Review');
-const Product = require('../models/ProductSimple');
+const Product = require('../models/Product');
 const { optionalAuth } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { reviewValidation } = require('../validation/reviewValidation');

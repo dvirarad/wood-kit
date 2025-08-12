@@ -31,7 +31,15 @@
       "Bash(git submodule:*)",
       "Bash(true)",
       "Bash(git rm:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(brew services start:*)",
+      "Bash(brew tap:*)",
+      "Bash(brew install:*)",
+      "Bash(mongod:*)",
+      "Bash(docker run:*)",
+      "Bash(PORT=3001 npm start)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

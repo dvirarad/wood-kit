@@ -4,7 +4,7 @@ const { adminOnly, adminLogin } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { adminValidation } = require('../validation/adminValidation');
 const Order = require('../models/Order');
-const Product = require('../models/ProductSimple');
+const Product = require('../models/Product');
 const Review = require('../models/Review');
 
 // Seed data for production deployment
