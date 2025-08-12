@@ -27,7 +27,11 @@
       "Bash(git push:*)",
       "Bash(mv:*)",
       "Bash(BASEDIR=/Users/arad/dev/kits-wood/2-react-migrated-version/frontend)",
-      "Bash(timeout 10s npm start)"
+      "Bash(timeout 10s npm start)",
+      "Bash(git submodule:*)",
+      "Bash(true)",
+      "Bash(git rm:*)",
+      "Bash(git config:*)"
     ],
     "deny": []
   }
