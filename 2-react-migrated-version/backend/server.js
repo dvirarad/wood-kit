@@ -93,10 +93,6 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/woodkits'
 .then(async () => {
   console.log('✅ Connected to MongoDB');
   console.log(`📍 Database: ${mongoose.connection.name}`);
-  
-  // Auto-seed database if empty
-  const autoSeedDatabase = require('./auto-seed');
-  await autoSeedDatabase();
 })
 .catch((error) => {
   console.error('❌ MongoDB connection error:', error.message);
