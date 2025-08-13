@@ -22,14 +22,19 @@ const orderItemSchema = new mongoose.Schema({
       depth: Number,
       steps: Number
     },
+    color: String,
     options: {
       lacquer: { type: Boolean, default: false },
       handrail: { type: Boolean, default: false }
+    },
+    customization: {
+      personalizedMessage: String
     }
   },
   pricing: {
     basePrice: { type: Number, required: true },
     sizeAdjustment: { type: Number, default: 0 },
+    colorCost: { type: Number, default: 0 },
     optionsCost: { type: Number, default: 0 },
     unitPrice: { type: Number, required: true }
   },
@@ -67,10 +72,20 @@ const customerSchema = new mongoose.Schema({
     match: [/^[\+]?[0-9\s\-\(\)]+$/, 'Please enter a valid phone number']
   },
   address: {
-    type: String,
+    type: mongoose.Schema.Types.Mixed,
     required: true,
-    trim: true,
-    maxlength: 500
+    validate: {
+      validator: function(address) {
+        if (typeof address === 'string') {
+          return address.trim().length > 0 && address.length <= 500;
+        }
+        if (typeof address === 'object' && address !== null) {
+          return address.street && address.city;
+        }
+        return false;
+      },
+      message: 'Address must be a string or object with street and city'
+    }
   }
 }, { _id: false });
 

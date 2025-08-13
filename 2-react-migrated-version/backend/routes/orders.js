@@ -45,7 +45,9 @@ router.post('/', validate(orderValidation.create), async (req, res) => {
         product.basePrice,
         product.dimensions,
         item.configuration.dimensions,
-        item.configuration.options
+        item.configuration.options,
+        product.colorOptions,
+        item.configuration.color
       );
 
       const processedItem = {
@@ -56,7 +58,8 @@ router.post('/', validate(orderValidation.create), async (req, res) => {
         pricing: {
           basePrice: pricing.basePrice,
           sizeAdjustment: pricing.sizeAdjustment,
-          optionsCost: (pricing.colorCost || 0) + (pricing.lacquerCost || 0) + (pricing.handrailCost || 0),
+          colorCost: pricing.colorCost || 0,
+          optionsCost: pricing.optionsCost || 0,
           unitPrice: pricing.totalPrice
         },
         quantity: item.quantity || 1,
@@ -108,9 +111,12 @@ router.post('/', validate(orderValidation.create), async (req, res) => {
       data: {
         orderId: order.orderId,
         id: order._id,
-        total: order.pricing.total,
+        customer: order.customer,
+        items: order.items,
+        pricing: order.pricing,
         currency: order.currency,
         status: order.status,
+        createdAt: order.createdAt,
         estimatedDelivery: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 14 days
       }
     });

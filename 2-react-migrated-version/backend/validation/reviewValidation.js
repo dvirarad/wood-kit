@@ -10,9 +10,10 @@ const reviewValidation = {
       }).required(),
       rating: Joi.number().integer().min(1).max(5).required(),
       title: Joi.string().trim().max(200),
-      text: Joi.string().trim().min(10).max(2000).required(),
+      text: Joi.string().trim().min(10).max(2000),
+      comment: Joi.string().trim().min(10).max(2000),
       language: Joi.string().valid('en', 'he', 'es').default('en')
-    })
+    }).or('text', 'comment')
   }),
 
   moderate: Joi.object({

@@ -42,7 +42,12 @@
       "Bash(pkill:*)",
       "Bash(touch:*)",
       "Bash(cat:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(./run-product-flow-test.sh:*)",
+      "Bash(npx jest tests/e2e/complete-product-flow.test.js:*)",
+      "Bash(npx jest:*)",
+      "Bash(./run-full-test-suite.sh)",
+      "Bash(./quick-validation.sh:*)"
     ],
     "deny": []
   }

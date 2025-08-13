@@ -106,12 +106,8 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    if (!product.isActive) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product is not available'
-      });
-    }
+    // Allow direct access to inactive products (for existing orders, etc.)
+    // The public listing already filters by isActive: true
 
     // Localize product
     const localizedProduct = {
@@ -154,7 +150,8 @@ router.get('/:id', async (req, res) => {
 router.post('/:id/calculate-price', async (req, res) => {
   try {
     const { id } = req.params;
-    const { dimensions: selectedDimensions, options = {} } = req.body;
+    const { configuration = {} } = req.body;
+    const { dimensions: selectedDimensions, options = {}, color } = configuration;
 
     // Find product
     const query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { productId: id };
@@ -172,7 +169,9 @@ router.post('/:id/calculate-price', async (req, res) => {
       product.basePrice,
       product.dimensions,
       selectedDimensions,
-      options
+      options,
+      product.colorOptions,
+      color
     );
 
     res.json({

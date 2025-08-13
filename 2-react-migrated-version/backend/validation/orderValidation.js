@@ -7,7 +7,15 @@ const orderValidation = {
         name: Joi.string().trim().max(100).required(),
         email: Joi.string().email().lowercase().required(),
         phone: Joi.string().pattern(/^[\+]?[0-9\s\-\(\)]+$/).required(),
-        address: Joi.string().trim().max(500).required()
+        address: Joi.alternatives().try(
+          Joi.string().trim().max(500),
+          Joi.object({
+            street: Joi.string().required(),
+            city: Joi.string().required(),
+            postalCode: Joi.string(),
+            country: Joi.string()
+          })
+        ).required()
       }).required(),
       items: Joi.array().items(
         Joi.object({
@@ -21,14 +29,18 @@ const orderValidation = {
               depth: Joi.number().min(0),
               steps: Joi.number().integer().min(1)
             }),
+            color: Joi.string().optional(),
             options: Joi.object({
-              color: Joi.string().optional(),
               lacquer: Joi.boolean().default(false),
               handrail: Joi.boolean().default(false)
-            })
+            }).optional(),
+            customization: Joi.object({
+              personalizedMessage: Joi.string().max(200).optional()
+            }).optional()
           }).required()
         })
       ).min(1).required(),
+      deliveryPreference: Joi.string().optional(),
       notes: Joi.string().allow('', null).optional(),
       language: Joi.string().valid('en', 'he', 'es').default('en')
     })

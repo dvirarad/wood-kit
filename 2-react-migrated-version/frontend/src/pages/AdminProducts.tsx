@@ -66,6 +66,16 @@ interface AdminProduct {
       price: number;
     };
   };
+  colorOptions: {
+    enabled: boolean;
+    priceModifier: number;
+    options: Array<{
+      name: { en: string; he: string; es: string };
+      value: string;
+      priceAdjustment: number;
+      available: boolean;
+    }>;
+  };
   category: string;
   tags: string[];
   images: Array<{
@@ -132,6 +142,24 @@ const AdminProducts: React.FC = () => {
       options: {
         lacquer: { available: true, price: 45 },
         handrail: { available: false, price: 0 }
+      },
+      colorOptions: {
+        enabled: true,
+        priceModifier: 0.4,
+        options: [
+          {
+            name: { en: 'Natural', he: 'טבעי', es: 'Natural' },
+            value: 'natural',
+            priceAdjustment: 0,
+            available: true
+          },
+          {
+            name: { en: 'Walnut', he: 'אגוז', es: 'Nogal' },
+            value: 'walnut',
+            priceAdjustment: 50,
+            available: true
+          }
+        ]
       },
       category: '',
       tags: [],
@@ -240,6 +268,66 @@ const AdminProducts: React.FC = () => {
           ...editingProduct.dimensions[dimension],
           [field]: value
         }
+      }
+    });
+  };
+
+  const updateColorOptions = (field: string, value: any) => {
+    if (!editingProduct) return;
+    
+    setEditingProduct({
+      ...editingProduct,
+      colorOptions: {
+        ...editingProduct.colorOptions,
+        [field]: value
+      }
+    });
+  };
+
+  const addColorOption = () => {
+    if (!editingProduct) return;
+    
+    const newColor = {
+      name: { he: '', en: '', es: '' },
+      value: '',
+      priceAdjustment: 0,
+      available: true
+    };
+    
+    setEditingProduct({
+      ...editingProduct,
+      colorOptions: {
+        ...editingProduct.colorOptions,
+        options: [...(editingProduct.colorOptions?.options || []), newColor]
+      }
+    });
+  };
+
+  const updateColorOption = (index: number, field: string, value: any) => {
+    if (!editingProduct || !editingProduct.colorOptions) return;
+    
+    const updatedOptions = [...editingProduct.colorOptions.options];
+    updatedOptions[index] = { ...updatedOptions[index], [field]: value };
+    
+    setEditingProduct({
+      ...editingProduct,
+      colorOptions: {
+        ...editingProduct.colorOptions,
+        options: updatedOptions
+      }
+    });
+  };
+
+  const removeColorOption = (index: number) => {
+    if (!editingProduct || !editingProduct.colorOptions) return;
+    
+    const updatedOptions = editingProduct.colorOptions.options.filter((_, i) => i !== index);
+    
+    setEditingProduct({
+      ...editingProduct,
+      colorOptions: {
+        ...editingProduct.colorOptions,
+        options: updatedOptions
       }
     });
   };

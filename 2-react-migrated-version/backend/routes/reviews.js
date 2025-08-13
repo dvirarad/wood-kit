@@ -126,6 +126,7 @@ router.post('/', optionalAuth, validate(reviewValidation.create), async (req, re
       rating,
       title,
       text,
+      comment,
       language = 'en'
     } = req.body;
 
@@ -164,9 +165,9 @@ router.post('/', optionalAuth, validate(reviewValidation.create), async (req, re
       },
       rating,
       title,
-      text,
+      text: text || comment,
       language,
-      status: 'approved', // Auto-approve reviews
+      status: 'pending', // Reviews require moderation
       metadata: {
         source: 'website',
         userAgent: req.get('User-Agent'),
@@ -185,7 +186,14 @@ router.post('/', optionalAuth, validate(reviewValidation.create), async (req, re
       message: 'Review submitted successfully and is pending moderation',
       data: {
         id: review._id,
+        productId: review.productId,
+        customer: review.customer,
+        rating: review.rating,
+        title: review.title,
+        text: review.text,
         status: review.status,
+        language: review.language,
+        createdAt: review.createdAt,
         submittedAt: review.createdAt
       }
     });

@@ -1,16 +1,30 @@
-// Simple session-based admin authentication
-let adminSession = null;
+// Simple token-based admin authentication
+let adminSessions = new Map();
 
 // Simple admin auth middleware
 const adminOnly = (req, res, next) => {
-  if (!adminSession || adminSession.expires < Date.now()) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
       success: false,
       message: 'Admin authentication required'
     });
   }
+
+  const token = authHeader.substring(7);
+  const session = adminSessions.get(token);
   
-  req.admin = adminSession;
+  if (!session || session.expires < Date.now()) {
+    if (session) {
+      adminSessions.delete(token);
+    }
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid or expired token'
+    });
+  }
+  
+  req.admin = session;
   next();
 };
 
@@ -34,19 +48,23 @@ const adminLogin = async (req, res) => {
       });
     }
     
-    // Create simple session (expires in 24 hours)
-    adminSession = {
+    // Create simple session token (expires in 24 hours)
+    const token = `admin-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const session = {
       username: ADMIN_USERNAME,
       loginTime: Date.now(),
       expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
     };
     
+    adminSessions.set(token, session);
+    
     res.json({
       success: true,
       message: 'Login successful',
+      token: token,
       data: {
         username: ADMIN_USERNAME,
-        sessionExpires: adminSession.expires
+        sessionExpires: session.expires
       }
     });
   } catch (error) {

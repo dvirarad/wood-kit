@@ -20,6 +20,19 @@ const dimensionSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 0
+  },
+  visible: {
+    type: Boolean,
+    default: true
+  },
+  editable: {
+    type: Boolean,
+    default: true
+  },
+  label: {
+    en: { type: String, default: '' },
+    he: { type: String, default: '' },
+    es: { type: String, default: '' }
   }
 }, { _id: false });
 
@@ -65,6 +78,20 @@ const productSchema = new mongoose.Schema({
       available: { type: Boolean, default: false },
       price: { type: Number, default: 0 }
     }
+  },
+  colorOptions: {
+    enabled: { type: Boolean, default: true },
+    priceModifier: { type: Number, default: 0.4 }, // 40% increase by default
+    options: [{
+      name: {
+        en: { type: String, required: true },
+        he: { type: String, required: true },
+        es: { type: String, required: true }
+      },
+      value: { type: String, required: true }, // color code or identifier
+      priceAdjustment: { type: Number, default: 0 }, // individual price adjustment
+      available: { type: Boolean, default: true }
+    }]
   },
   category: {
     type: String,
@@ -143,7 +170,7 @@ productSchema.pre('save', function(next) {
 });
 
 // Static method to calculate price
-productSchema.statics.calculatePrice = function(basePrice, dimensions, selectedDimensions, options = {}) {
+productSchema.statics.calculatePrice = function(basePrice, dimensions, selectedDimensions, options = {}, colorOptions = {}, selectedColor = null) {
   let totalPrice = basePrice;
 
   // Calculate size adjustments
@@ -159,21 +186,39 @@ productSchema.statics.calculatePrice = function(basePrice, dimensions, selectedD
 
   totalPrice += sizeAdjustment;
 
-  // Add option costs
+  // Add option costs (lacquer, handrail, etc.)
   let optionsCost = 0;
-  if (options.lacquer && this.options?.lacquer?.available) {
-    optionsCost += this.options.lacquer.price || 0;
+  if (options.lacquer) {
+    optionsCost += 45; // Default lacquer price
   }
-  if (options.handrail && this.options?.handrail?.available) {
-    optionsCost += this.options.handrail.price || 0;
+  if (options.handrail) {
+    optionsCost += 120; // Default handrail price
   }
 
-  totalPrice += optionsCost;
+  // Calculate color cost
+  let colorCost = 0;
+  if (selectedColor && colorOptions && colorOptions.enabled) {
+    if (selectedColor !== 'natural' && selectedColor !== 'ללא צבע') {
+      const woodPriceAfterSize = totalPrice;
+      colorCost = Math.round(woodPriceAfterSize * (colorOptions.priceModifier || 0.4));
+      
+      // Add individual color adjustment if specified
+      if (colorOptions.options) {
+        const colorOption = colorOptions.options.find(opt => opt.value === selectedColor);
+        if (colorOption && colorOption.priceAdjustment) {
+          colorCost += colorOption.priceAdjustment;
+        }
+      }
+    }
+  }
+
+  totalPrice += optionsCost + colorCost;
 
   return {
     basePrice,
     sizeAdjustment: Math.round(sizeAdjustment * 100) / 100,
     optionsCost: Math.round(optionsCost * 100) / 100,
+    colorCost: Math.round(colorCost * 100) / 100,
     totalPrice: Math.max(Math.round(totalPrice * 100) / 100, 0)
   };
 };

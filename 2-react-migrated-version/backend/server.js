@@ -93,7 +93,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/woodkits'
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('👋 SIGTERM received. Shutting down gracefully...');
-  mongoose.connection.close(() => {
+  mongoose.connection.close().then(() => {
     console.log('🔌 MongoDB connection closed.');
     process.exit(0);
   });
@@ -101,19 +101,21 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   console.log('👋 SIGINT received. Shutting down gracefully...');
-  mongoose.connection.close(() => {
+  mongoose.connection.close().then(() => {
     console.log('🔌 MongoDB connection closed.');
     process.exit(0);
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log('🚀 Wood Kits API Server Started');
-  console.log(`📡 Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
-  console.log(`💚 Health Check: http://localhost:${PORT}/health`);
-});
+// Only start server if this file is run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log('🚀 Wood Kits API Server Started');
+    console.log(`📡 Server running on port ${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
+    console.log(`💚 Health Check: http://localhost:${PORT}/health`);
+  });
+}
 
 module.exports = app;

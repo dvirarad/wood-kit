@@ -3,7 +3,34 @@ const request = require('supertest');
 // Mock the database connection
 jest.mock('mongoose', () => ({
   connect: jest.fn().mockResolvedValue(true),
-  connection: { name: 'test_db' }
+  connection: { name: 'test_db' },
+  Schema: class MockSchema {
+    constructor(definition, options) {
+      this.definition = definition;
+      this.options = options;
+    }
+    static Types = {
+      ObjectId: 'ObjectId',
+      Mixed: 'Mixed'
+    };
+    index() { return this; }
+    static() { return this; }
+    virtual() { return { get: () => this, set: () => this }; }
+    pre() { return this; }
+    post() { return this; }
+    methods = {};
+    statics = {};
+  },
+  model: jest.fn().mockReturnValue({
+    find: jest.fn().mockReturnValue({
+      sort: jest.fn().mockReturnValue({
+        limit: jest.fn().mockResolvedValue([])
+      })
+    }),
+    findOne: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue({}),
+    deleteMany: jest.fn().mockResolvedValue({ deletedCount: 0 })
+  })
 }));
 
 // Import the app after mocking

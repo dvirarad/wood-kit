@@ -546,6 +546,125 @@ router.get('/reviews/pending', adminOnly, async (req, res) => {
   }
 });
 
+// @desc    Get all products (Admin only)
+// @route   GET /api/v1/admin/products
+// @access  Private/Admin
+router.get('/products', adminOnly, async (req, res) => {
+  try {
+    const products = await Product.find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      products: products
+    });
+  } catch (error) {
+    console.error('Error fetching admin products:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching products',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Create new product (Admin only)
+// @route   POST /api/v1/admin/products
+// @access  Private/Admin
+router.post('/products', adminOnly, async (req, res) => {
+  try {
+    const productData = req.body;
+    
+    // Generate productId if not provided
+    if (!productData.productId) {
+      productData.productId = `product-${Date.now()}`;
+    }
+
+    const product = new Product(productData);
+    await product.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Product created successfully',
+      data: product
+    });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating product',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Update product (Admin only)
+// @route   PUT /api/v1/admin/products/:id
+// @access  Private/Admin
+router.put('/products/:id', adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const product = await Product.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Product updated successfully',
+      data: product
+    });
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating product',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Delete product (Admin only)
+// @route   DELETE /api/v1/admin/products/:id
+// @access  Private/Admin
+router.delete('/products/:id', adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findByIdAndDelete(id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Product deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting product',
+      error: error.message
+    });
+  }
+});
+
 // @desc    System health check (Admin only)
 // @route   GET /api/v1/admin/health
 // @access  Private/Admin
