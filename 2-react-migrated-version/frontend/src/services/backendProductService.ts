@@ -89,19 +89,23 @@ class BackendProductService {
 
   // Convert backend product to frontend format
   private toClientProduct(backendProduct: BackendProduct): ClientProduct {
-    // Convert backend dimensions to frontend format
+    // Convert backend dimensions to frontend format - handle missing dimensions
     const dimensions: { [key: string]: DimensionConfig } = {};
-    Object.entries(backendProduct.dimensions).forEach(([key, config]) => {
-      dimensions[key] = {
-        min: config.min,
-        max: config.max,
-        default: config.default,
-        step: 5, // Default step
-        visible: true,
-        editable: true,
-        priceModifier: config.multiplier
-      };
-    });
+    if (backendProduct.dimensions && typeof backendProduct.dimensions === 'object') {
+      Object.entries(backendProduct.dimensions).forEach(([key, config]) => {
+        if (config && typeof config === 'object') {
+          dimensions[key] = {
+            min: config.min || 0,
+            max: config.max || 100,
+            default: config.default || 50,
+            step: 5, // Default step
+            visible: true,
+            editable: true,
+            priceModifier: config.multiplier || 0
+          };
+        }
+      });
+    }
 
     // Add default color options
     const colorOptions: ColorConfig = {
@@ -115,21 +119,24 @@ class BackendProductService {
     const productDescriptions = this.getProductDescriptions(backendProduct.productId);
 
     return {
-      id: backendProduct.id,
-      productId: backendProduct.productId,
+      id: backendProduct.id || '',
+      productId: backendProduct.productId || '',
       name: productNames,
       description: productDescriptions,
-      category: backendProduct.category,
-      basePrice: backendProduct.basePrice,
-      images: backendProduct.images.map(img => ({
-        url: img.url,
-        isPrimary: img.isPrimary
+      category: backendProduct.category || '',
+      basePrice: backendProduct.basePrice || 0,
+      images: (backendProduct.images || []).map(img => ({
+        url: img?.url || '',
+        isPrimary: img?.isPrimary || false
       })),
       inventory: {
-        inStock: backendProduct.inventory.inStock,
-        quantity: backendProduct.inventory.stockLevel
+        inStock: backendProduct.inventory?.inStock || false,
+        quantity: backendProduct.inventory?.stockLevel || 0
       },
-      ratings: backendProduct.ratings,
+      ratings: {
+        average: backendProduct.ratings?.average || 0,
+        count: backendProduct.ratings?.count || 0
+      },
       customization: {
         dimensions,
         colorOptions
@@ -232,8 +239,22 @@ class BackendProductService {
 
   async getClientProduct(id: string): Promise<ClientProduct | null> {
     try {
-      const product = await api.get<BackendProduct>(`/products/${id}`);
-      return this.toClientProduct(product);
+      const response = await api.get<{
+        success: boolean;
+        data: BackendProduct;
+        meta?: any;
+      }>(`/products/${id}`);
+      
+      console.log('Raw product API response:', response);
+      
+      if (!response.success || !response.data) {
+        console.error('Invalid product API response format:', response);
+        return null;
+      }
+      
+      const converted = this.toClientProduct(response.data);
+      console.log('Converted product:', converted);
+      return converted;
     } catch (error) {
       console.error(`Failed to fetch product ${id}:`, error);
       return null;

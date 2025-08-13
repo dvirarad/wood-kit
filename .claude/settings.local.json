@@ -41,7 +41,8 @@
       "Bash(curl:*)",
       "Bash(pkill:*)",
       "Bash(touch:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(kill:*)"
     ],
     "deny": []
   }
