@@ -154,11 +154,12 @@ class BackendProductService {
       if (options?.limit) queryParams.append('limit', options.limit.toString());
       
       const response = await api.get<{
-        products: BackendProduct[];
+        success: boolean;
+        data: BackendProduct[];
         pagination: any;
       }>(`/products?${queryParams.toString()}`);
       
-      return response.products.map(this.toClientProduct);
+      return response.data.map(this.toClientProduct);
     } catch (error) {
       console.error('Failed to fetch products:', error);
       return [];

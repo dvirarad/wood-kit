@@ -2,12 +2,12 @@
 import { api } from './api';
 
 interface LoginResponse {
-  token: string;
-  admin: {
-    id: string;
-    username: string;
-  };
+  success: boolean;
   message: string;
+  data: {
+    username: string;
+    sessionExpires: number;
+  };
 }
 
 interface AdminStats {
@@ -31,9 +31,11 @@ class AuthService {
         password
       });
 
-      // Store token and admin data
-      localStorage.setItem(this.TOKEN_KEY, response.token);
-      localStorage.setItem(this.ADMIN_KEY, JSON.stringify(response.admin));
+      if (response.success) {
+        // Store session data (no token, just session-based)
+        localStorage.setItem(this.TOKEN_KEY, 'session');
+        localStorage.setItem(this.ADMIN_KEY, JSON.stringify(response.data));
+      }
 
       return response;
     } catch (error) {
