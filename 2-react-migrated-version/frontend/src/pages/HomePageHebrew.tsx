@@ -94,7 +94,16 @@ const HomePageHebrew: React.FC = () => {
       </Typography>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-        {products.map((product) => (
+        {products.map((product) => {
+          // Debug logging
+          console.log('Rendering product:', product);
+          
+          if (!product || !product.name || !product.name.he) {
+            console.error('Invalid product data:', product);
+            return null; // Skip invalid products
+          }
+          
+          return (
           <Box key={product.id} sx={{ flex: '1 1 300px', minWidth: '300px', maxWidth: '400px' }}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               {product.images && product.images.length > 0 ? (
@@ -174,7 +183,8 @@ const HomePageHebrew: React.FC = () => {
               </CardActions>
             </Card>
           </Box>
-        ))}
+          );
+        }).filter(Boolean)}
       </Box>
 
       {products.length === 0 && (

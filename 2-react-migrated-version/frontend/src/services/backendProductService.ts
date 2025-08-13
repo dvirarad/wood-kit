@@ -208,7 +208,22 @@ class BackendProductService {
         pagination: any;
       }>(`/products?${queryParams.toString()}`);
       
-      return response.data.map(this.toClientProduct);
+      console.log('Raw API response:', response);
+      console.log('Raw API data:', response.data);
+      
+      if (!response.data || !Array.isArray(response.data)) {
+        console.error('Invalid API response format:', response);
+        return [];
+      }
+      
+      const convertedProducts = response.data.map((product, index) => {
+        console.log(`Converting product ${index}:`, product);
+        const converted = this.toClientProduct(product);
+        console.log(`Converted product ${index}:`, converted);
+        return converted;
+      });
+      
+      return convertedProducts;
     } catch (error) {
       console.error('Failed to fetch products:', error);
       return [];
