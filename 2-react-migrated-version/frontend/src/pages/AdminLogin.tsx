@@ -1,0 +1,106 @@
+import React, { useState } from 'react';
+import { 
+  Container, 
+  Paper, 
+  TextField, 
+  Button, 
+  Typography, 
+  Box, 
+  Alert 
+} from '@mui/material';
+import { AdminPanelSettings as AdminIcon } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import Navigation from '../components/Navigation';
+
+const AdminLogin: React.FC = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // Simple validation for demo purposes
+    if (username === 'admin' && password === 'admin123') {
+      // In a real app, you'd make an API call here
+      localStorage.setItem('adminToken', 'demo-token');
+      navigate('/admin/dashboard');
+    } else {
+      setError('שם משתמש או סיסמה שגויים');
+    }
+  };
+
+  return (
+    <>
+      <Navigation />
+      <Container maxWidth="sm" sx={{ py: 8, direction: 'rtl' }}>
+        <Paper elevation={3} sx={{ p: 4 }}>
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <AdminIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+            <Typography variant="h4" component="h1" gutterBottom>
+              כניסת מנהל
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              הזן את פרטי הכניסה שלך כדי לגשת לפאנל הניהול
+            </Typography>
+          </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="username"
+              label="שם משתמש"
+              name="username"
+              autoComplete="username"
+              autoFocus
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="סיסמה"
+              type="password"
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              sx={{ mb: 3 }}
+            />
+            
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2, py: 1.5 }}
+            >
+              התחבר
+            </Button>
+            
+            <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                לצורכי הדגמה: שם משתמש: admin, סיסמה: admin123
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
+    </>
+  );
+};
+
+export default AdminLogin;
