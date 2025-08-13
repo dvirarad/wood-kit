@@ -48,6 +48,8 @@ import backendProductService from '../services/backendProductService';
 interface AdminProduct {
   id?: string;
   productId: string;
+  name?: { he: string; en: string }; // Optional for display purposes
+  description?: { he: string; en: string }; // Optional for display purposes
   basePrice: number;
   currency: string;
   dimensions: {
@@ -118,6 +120,8 @@ const AdminProducts: React.FC = () => {
   const handleAddProduct = () => {
     const newProduct: AdminProduct = {
       productId: '',
+      name: { he: '', en: '' }, // Initialize name
+      description: { he: '', en: '' }, // Initialize description
       basePrice: 0,
       currency: 'NIS',
       dimensions: {
@@ -182,6 +186,7 @@ const AdminProducts: React.FC = () => {
         const imageUrl = e.target?.result as string;
         const newImage = {
           url: imageUrl,
+          alt: file.name || 'תמונת מוצר',
           isPrimary: editingProduct.images.length === 0 // First image is primary by default
         };
         
@@ -239,18 +244,16 @@ const AdminProducts: React.FC = () => {
     });
   };
 
-  const calculateExamplePrice = (product: ManagedProduct): number => {
+  const calculateExamplePrice = (product: AdminProduct): number => {
     const { length, width, height } = product.dimensions;
-    const lengthCost = (length.default - length.min) * length.priceModifier;
-    const widthCost = (width.default - width.min) * width.priceModifier;
-    const heightCost = (height.default - height.min) * height.priceModifier;
+    const lengthCost = length ? (length.default - length.min) * length.multiplier : 0;
+    const widthCost = width ? (width.default - width.min) * width.multiplier : 0;
+    const heightCost = height ? (height.default - height.min) * height.multiplier : 0;
     
     let totalPrice = product.basePrice + lengthCost + widthCost + heightCost;
     
-    // Add color cost (40% increase) for example calculation
-    if (product.colorOptions?.enabled) {
-      totalPrice += totalPrice * product.colorOptions.priceModifier;
-    }
+    // Add color cost (40% increase) for example calculation - simplified for now
+    totalPrice += totalPrice * 0.4;
     
     return totalPrice;
   };
@@ -292,13 +295,13 @@ const AdminProducts: React.FC = () => {
             <TableBody>
               {products.map((product) => (
                 <TableRow key={product.id}>
-                  <TableCell>{product.name.he}</TableCell>
+                  <TableCell>{product.name?.he || product.productId}</TableCell>
                   <TableCell>{product.category}</TableCell>
                   <TableCell>₪{product.basePrice}</TableCell>
                   <TableCell>₪{calculateExamplePrice(product).toFixed(2)}</TableCell>
                   <TableCell>
                     <Chip 
-                      label={product.inventory.inStock ? `${product.inventory.quantity} יחידות` : 'אזל המלאי'}
+                      label={product.inventory.inStock ? `${product.inventory.stockLevel} יחידות` : 'אזל המלאי'}
                       color={product.inventory.inStock ? 'success' : 'error'}
                       variant="outlined"
                     />
@@ -339,19 +342,19 @@ const AdminProducts: React.FC = () => {
                         <TextField
                           fullWidth
                           label="שם המוצר (עברית)"
-                          value={editingProduct.name.he}
+                          value={editingProduct.name?.he || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            name: { ...editingProduct.name, he: e.target.value }
+                            name: { ...(editingProduct.name || { he: '', en: '' }), he: e.target.value }
                           })}
                         />
                         <TextField
                           fullWidth
                           label="שם המוצר (אנגלית)"
-                          value={editingProduct.name.en}
+                          value={editingProduct.name?.en || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            name: { ...editingProduct.name, en: e.target.value }
+                            name: { ...(editingProduct.name || { he: '', en: '' }), en: e.target.value }
                           })}
                         />
                       </Box>
@@ -361,10 +364,10 @@ const AdminProducts: React.FC = () => {
                           multiline
                           rows={3}
                           label="תיאור (עברית)"
-                          value={editingProduct.description.he}
+                          value={editingProduct.description?.he || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            description: { ...editingProduct.description, he: e.target.value }
+                            description: { ...(editingProduct.description || { he: '', en: '' }), he: e.target.value }
                           })}
                         />
                         <TextField
@@ -372,10 +375,10 @@ const AdminProducts: React.FC = () => {
                           multiline
                           rows={3}
                           label="תיאור (אנגלית)"
-                          value={editingProduct.description.en}
+                          value={editingProduct.description?.en || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            description: { ...editingProduct.description, en: e.target.value }
+                            description: { ...(editingProduct.description || { he: '', en: '' }), en: e.target.value }
                           })}
                         />
                       </Box>
@@ -409,10 +412,10 @@ const AdminProducts: React.FC = () => {
                           sx={{ flex: 1 }}
                           type="number"
                           label="כמות במלאי"
-                          value={editingProduct.inventory.quantity}
+                          value={editingProduct.inventory.stockLevel}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            inventory: { ...editingProduct.inventory, quantity: Number(e.target.value) }
+                            inventory: { ...editingProduct.inventory, stockLevel: Number(e.target.value) }
                           })}
                         />
                       </Box>
@@ -457,112 +460,17 @@ const AdminProducts: React.FC = () => {
                             <TextField
                               size="small"
                               type="number"
-                              label="צעדים"
-                              sx={{ flex: '1 1 120px' }}
-                              value={editingProduct.dimensions[dimension].step}
-                              onChange={(e) => updateDimension(dimension, 'step', Number(e.target.value))}
-                            />
-                            <TextField
-                              size="small"
-                              type="number"
                               label="מחיר לס&quot;מ"
                               sx={{ flex: '1 1 120px' }}
-                              value={editingProduct.dimensions[dimension].priceModifier}
-                              onChange={(e) => updateDimension(dimension, 'priceModifier', Number(e.target.value))}
+                              value={editingProduct.dimensions[dimension].multiplier}
+                              onChange={(e) => updateDimension(dimension, 'multiplier', Number(e.target.value))}
                             />
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                              <FormControlLabel
-                                control={
-                                  <Switch
-                                    checked={editingProduct.dimensions[dimension].visible}
-                                    onChange={(e) => updateDimension(dimension, 'visible', e.target.checked)}
-                                  />
-                                }
-                                label="נראה"
-                              />
-                              <FormControlLabel
-                                control={
-                                  <Switch
-                                    checked={editingProduct.dimensions[dimension].editable}
-                                    onChange={(e) => updateDimension(dimension, 'editable', e.target.checked)}
-                                  />
-                                }
-                                label="ניתן לעריכה"
-                              />
-                            </Box>
                           </Box>
                         </CardContent>
                       </Card>
                     ))}
                   </Box>
 
-                  {/* Color Options Configuration */}
-                  <Box>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="h6" gutterBottom>אפשרויות צבע</Typography>
-                    
-                    <Card sx={{ mb: 2 }}>
-                      <CardContent>
-                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={editingProduct.colorOptions?.enabled || false}
-                                onChange={(e) => setEditingProduct({
-                                  ...editingProduct,
-                                  colorOptions: {
-                                    enabled: e.target.checked,
-                                    priceModifier: editingProduct.colorOptions?.priceModifier || 0.4,
-                                    options: editingProduct.colorOptions?.options || ['ללא צבע', 'דובדבן', 'אגוז', 'לבן', 'שחור', 'אלון', 'מייפל', 'ירוק', 'אפור']
-                                  }
-                                })}
-                              />
-                            }
-                            label="אפשר בחירת צבע"
-                          />
-                          
-                          {editingProduct.colorOptions?.enabled && (
-                            <TextField
-                              size="small"
-                              type="number"
-                              label="אחוז תוספת מחיר (0.4 = 40%)"
-                              sx={{ flex: '1 1 200px' }}
-                              value={editingProduct.colorOptions.priceModifier}
-                              onChange={(e) => setEditingProduct({
-                                ...editingProduct,
-                                colorOptions: {
-                                  ...editingProduct.colorOptions!,
-                                  priceModifier: Number(e.target.value)
-                                }
-                              })}
-                              inputProps={{ step: 0.1, min: 0, max: 1 }}
-                            />
-                          )}
-                        </Box>
-                        
-                        {editingProduct.colorOptions?.enabled && (
-                          <Box>
-                            <Typography variant="subtitle2" gutterBottom>
-                              אפשרויות צבע זמינות:
-                            </Typography>
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                              {editingProduct.colorOptions.options.map((color, index) => (
-                                <Chip 
-                                  key={index}
-                                  label={color}
-                                  variant="outlined"
-                                  color={color === 'ללא צבע' ? 'default' : 'primary'}
-                                />
-                              ))}
-                            </Box>
-                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                              הצבעים הזמינים: ללא צבע, דובדבן, אגוז, לבן, שחור, אלון, מייפל, ירוק, אפור
-                            </Typography>
-                          </Box>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Box>
 
                   {/* Price Preview */}
                   <Box>
