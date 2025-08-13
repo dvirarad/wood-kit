@@ -18,7 +18,7 @@ import {
   Snackbar
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
-import productManager, { ClientProduct } from '../services/productManagerService';
+import backendProductService, { ClientProduct } from '../services/backendProductService';
 import { useCart, CartItem } from '../context/CartContext';
 import Navigation from '../components/Navigation';
 
@@ -46,10 +46,10 @@ const ProductPageHebrew: React.FC = () => {
       return;
     }
 
-    const fetchProduct = () => {
+    const fetchProduct = async () => {
       try {
         setLoading(true);
-        const clientProduct = productManager.getClientProduct(productId);
+        const clientProduct = await backendProductService.getClientProduct(productId);
         if (!clientProduct) {
           setError('מוצר לא נמצא');
           setLoading(false);
@@ -90,7 +90,7 @@ const ProductPageHebrew: React.FC = () => {
           height: dimensions.height,
           color: selectedColor
         };
-        const totalPrice = productManager.calculatePrice(product.productId, customizations);
+        const totalPrice = backendProductService.calculatePrice(product.productId, customizations);
         setCalculatedPrice(totalPrice);
       } catch (err) {
         console.error('Price calculation failed:', err);

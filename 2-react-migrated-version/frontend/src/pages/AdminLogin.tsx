@@ -11,6 +11,7 @@ import {
 import { AdminPanelSettings as AdminIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
+import authService from '../services/authService';
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -22,12 +23,10 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    // Simple validation for demo purposes
-    if (username === 'admin' && password === 'admin123') {
-      // In a real app, you'd make an API call here
-      localStorage.setItem('adminToken', 'demo-token');
+    try {
+      await authService.login(username, password);
       navigate('/admin/dashboard');
-    } else {
+    } catch (error) {
       setError('שם משתמש או סיסמה שגויים');
     }
   };

@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { Category as CategoryIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import productManager, { ClientProduct } from '../services/productManagerService';
+import backendProductService, { ClientProduct } from '../services/backendProductService';
 import Navigation from '../components/Navigation';
 
 const HomePageHebrew: React.FC = () => {
@@ -25,10 +25,10 @@ const HomePageHebrew: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProducts = () => {
+    const fetchProducts = async () => {
       try {
         setLoading(true);
-        const clientProducts = productManager.getClientProducts({ 
+        const clientProducts = await backendProductService.getClientProducts({ 
           language: 'he',
           limit: 6 
         });
@@ -44,7 +44,7 @@ const HomePageHebrew: React.FC = () => {
     fetchProducts();
 
     // Subscribe to product changes
-    const unsubscribe = productManager.subscribe(() => {
+    const unsubscribe = backendProductService.subscribe(() => {
       fetchProducts();
     });
 

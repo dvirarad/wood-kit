@@ -11,6 +11,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Frontend environment files
+**/frontend/.env.local
+
 # Build outputs
 /1-standalone-version/dist/
 /2-react-migrated-version/frontend/build/
