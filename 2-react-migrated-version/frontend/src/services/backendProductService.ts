@@ -1,13 +1,10 @@
 // Backend API integration for products
 import { api } from './api';
 
-// Backend API interfaces
+// Backend API interfaces - based on actual API response
 interface BackendProduct {
   id: string;
   productId: string;
-  name: { he: string; en: string };
-  description: { he: string; en: string };
-  category: string;
   basePrice: number;
   currency: string;
   dimensions: {
@@ -24,22 +21,24 @@ interface BackendProduct {
       price: number;
     };
   };
+  category: string;
   tags: string[];
   images: Array<{
     url: string;
     alt: string;
     isPrimary: boolean;
+    _id?: string;
   }>;
-  isActive: boolean;
+  ratings: {
+    average: number;
+    count: number;
+  };
   inventory: {
     inStock: boolean;
     stockLevel: number;
     lowStockThreshold: number;
   };
-  ratings: {
-    average: number;
-    count: number;
-  };
+  createdAt: string;
 }
 
 // Convert backend product to frontend format
@@ -111,11 +110,15 @@ class BackendProductService {
       options: ['ללא צבע', 'דובדבן', 'אגוז', 'לבן', 'שחור', 'אלון', 'מייפל', 'ירוק', 'אפור']
     };
 
+    // Create Hebrew names from productId since backend doesn't have localized names
+    const productNames = this.getProductNames(backendProduct.productId);
+    const productDescriptions = this.getProductDescriptions(backendProduct.productId);
+
     return {
       id: backendProduct.id,
       productId: backendProduct.productId,
-      name: backendProduct.name,
-      description: backendProduct.description,
+      name: productNames,
+      description: productDescriptions,
       category: backendProduct.category,
       basePrice: backendProduct.basePrice,
       images: backendProduct.images.map(img => ({
@@ -132,6 +135,52 @@ class BackendProductService {
         colorOptions
       }
     };
+  }
+
+  // Helper function to get Hebrew/English names from productId
+  private getProductNames(productId: string): { he: string; en: string } {
+    const nameMap: { [key: string]: { he: string; en: string } } = {
+      'amsterdam-bookshelf': { he: 'ספרייה אמסטרדם', en: 'Amsterdam Bookshelf' },
+      'venice-bookshelf': { he: 'ספרייה ונציה', en: 'Venice Bookshelf' },
+      'garden-bench': { he: 'ספסל גן', en: 'Garden Bench' },
+      'stairs': { he: 'מדרגות מותאמות', en: 'Custom Stairs' },
+      'dog-bed': { he: 'מיטת כלב', en: 'Dog Bed' },
+      'wooden-planter': { he: 'עציץ עץ', en: 'Wooden Planter' }
+    };
+    
+    return nameMap[productId] || { he: productId, en: productId };
+  }
+
+  // Helper function to get Hebrew/English descriptions from productId
+  private getProductDescriptions(productId: string): { he: string; en: string } {
+    const descMap: { [key: string]: { he: string; en: string } } = {
+      'amsterdam-bookshelf': { 
+        he: 'ספרייה מודרנית עם קווים נקיים. התאימו גובה ורוחב כדי להתאים לחלל שלכם בצורה מושלמת.', 
+        en: 'Modern bookshelf with clean lines. Customize height and width to fit your space perfectly.' 
+      },
+      'venice-bookshelf': { 
+        he: 'ספרייה בעיצוב קלאסי עם קימורים אלגנטיים. בחרו את המידות שלכם להתאמה מושלמת.', 
+        en: 'Classic design bookshelf with elegant curves. Choose your dimensions for the perfect fit.' 
+      },
+      'garden-bench': { 
+        he: 'ספסל גן מעץ מלא עמיד בפני מזג אוויר', 
+        en: 'Weather-resistant solid wood garden bench' 
+      },
+      'stairs': { 
+        he: 'מדרגות עץ לשימוש פנימי. מידות הניתנות להתאמה מלאה עם מעקה אופציונלי.', 
+        en: 'Wooden stairs for indoor use. Fully customizable dimensions with optional handrail.' 
+      },
+      'dog-bed': { 
+        he: 'מיטה נוחה וחמה לכלב שלכם', 
+        en: 'Comfortable and warm bed for your dog' 
+      },
+      'wooden-planter': { 
+        he: 'עציץ עץ מעוצב לגינה שלכם', 
+        en: 'Designed wooden planter for your garden' 
+      }
+    };
+    
+    return descMap[productId] || { he: 'תיאור המוצר', en: 'Product description' };
   }
 
   // Event listener system for real-time updates

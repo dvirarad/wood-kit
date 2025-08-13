@@ -42,15 +42,49 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
-import productManager, { ManagedProduct } from '../services/productManagerService';
+import backendProductService from '../services/backendProductService';
+
+// Admin product interface for backend API
+interface AdminProduct {
+  id?: string;
+  productId: string;
+  basePrice: number;
+  currency: string;
+  dimensions: {
+    [key: string]: {
+      min: number;
+      max: number;
+      default: number;
+      multiplier: number;
+    };
+  };
+  options: {
+    [key: string]: {
+      available: boolean;
+      price: number;
+    };
+  };
+  category: string;
+  tags: string[];
+  images: Array<{
+    url: string;
+    alt: string;
+    isPrimary: boolean;
+  }>;
+  inventory: {
+    inStock: boolean;
+    stockLevel: number;
+    lowStockThreshold: number;
+  };
+}
 
 // Use the shared ManagedProduct interface from productManagerService
 
 const AdminProducts: React.FC = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<ManagedProduct[]>([]);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<ManagedProduct | null>(null);
+  const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -65,64 +99,77 @@ const AdminProducts: React.FC = () => {
 
   useEffect(() => {
     // Subscribe to product changes
-    const unsubscribe = productManager.subscribe(() => {
+    const unsubscribe = backendProductService.subscribe(() => {
       loadProducts();
     });
 
     return unsubscribe;
   }, []);
 
-  const loadProducts = () => {
-    const allProducts = productManager.getAllProducts();
-    setProducts(allProducts);
+  const loadProducts = async () => {
+    try {
+      const allProducts = await backendProductService.getAllProducts();
+      setProducts(allProducts);
+    } catch (error) {
+      console.error('Failed to load products:', error);
+    }
   };
 
   const handleAddProduct = () => {
-    const newProduct: Omit<ManagedProduct, 'id' | 'createdAt' | 'updatedAt'> = {
-      name: { he: '', en: '' },
-      description: { he: '', en: '' },
-      category: '',
+    const newProduct: AdminProduct = {
+      productId: '',
       basePrice: 0,
+      currency: 'NIS',
       dimensions: {
-        length: { min: 10, max: 300, default: 100, step: 10, visible: true, editable: true, priceModifier: 1.0 },
-        width: { min: 10, max: 300, default: 50, step: 5, visible: true, editable: true, priceModifier: 1.0 },
-        height: { min: 10, max: 300, default: 100, step: 10, visible: true, editable: true, priceModifier: 1.0 }
+        length: { min: 10, max: 300, default: 100, multiplier: 1.0 },
+        width: { min: 10, max: 300, default: 50, multiplier: 1.0 },
+        height: { min: 10, max: 300, default: 100, multiplier: 1.0 }
       },
-      colorOptions: {
-        enabled: true,
-        priceModifier: 0.4,
-        options: ['ללא צבע', 'דובדבן', 'אגוז', 'לבן', 'שחור', 'אלון', 'מייפל', 'ירוק', 'אפור']
+      options: {
+        lacquer: { available: true, price: 45 },
+        handrail: { available: false, price: 0 }
       },
+      category: '',
+      tags: [],
       images: [],
-      inventory: { inStock: true, quantity: 0 }
+      inventory: { inStock: true, stockLevel: 0, lowStockThreshold: 5 }
     };
-    setEditingProduct({ ...newProduct, id: '', createdAt: '', updatedAt: '' });
+    setEditingProduct(newProduct);
     setDialogOpen(true);
   };
 
-  const handleEditProduct = (product: ManagedProduct) => {
+  const handleEditProduct = (product: AdminProduct) => {
     setEditingProduct({ ...product });
     setDialogOpen(true);
   };
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!editingProduct) return;
     
-    if (editingProduct.id && editingProduct.id !== '') {
-      // Update existing product
-      productManager.updateProduct(editingProduct.id, editingProduct);
-    } else {
-      // Add new product
-      const { id, createdAt, updatedAt, ...productData } = editingProduct;
-      productManager.addProduct(productData);
+    try {
+      if (editingProduct.id) {
+        // Update existing product
+        await backendProductService.updateProduct(editingProduct.id, editingProduct);
+      } else {
+        // Add new product
+        await backendProductService.addProduct(editingProduct);
+      }
+      
+      setDialogOpen(false);
+      setEditingProduct(null);
+      loadProducts(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to save product:', error);
     }
-    
-    setDialogOpen(false);
-    setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    productManager.deleteProduct(productId);
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      await backendProductService.deleteProduct(productId);
+      loadProducts(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+    }
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
