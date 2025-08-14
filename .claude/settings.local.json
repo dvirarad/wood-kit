@@ -47,7 +47,11 @@
       "Bash(npx jest tests/e2e/complete-product-flow.test.js:*)",
       "Bash(npx jest:*)",
       "Bash(./run-full-test-suite.sh)",
-      "Bash(./quick-validation.sh:*)"
+      "Bash(./quick-validation.sh:*)",
+      "Bash(echo:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh run list:*)",
+      "Bash(python3:*)"
     ],
     "deny": []
   }

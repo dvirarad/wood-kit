@@ -1,0 +1,129 @@
+name: Simple E2E Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  quick-e2e:
+    name: Quick E2E Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    services:
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: password123
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --username admin --password password123 --eval 'db.runCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          2-react-migrated-version/backend/package-lock.json
+          2-react-migrated-version/frontend/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd 2-react-migrated-version/backend
+        npm ci
+        cd ../frontend  
+        npm ci
+
+    - name: Build frontend
+      run: |
+        cd 2-react-migrated-version/frontend
+        npm run build
+      env:
+        REACT_APP_API_URL: http://localhost:6003/api/v1
+        GENERATE_SOURCEMAP: false
+
+    - name: Start services
+      run: |
+        # Start backend
+        cd 2-react-migrated-version/backend
+        NODE_ENV=test PORT=6003 MONGODB_URI=mongodb://admin:password123@localhost:27017/woodkits-e2e-test?authSource=admin npm start &
+        BACKEND_PID=$!
+        echo $BACKEND_PID > ../backend.pid
+        
+        # Start frontend
+        cd ../frontend
+        PORT=6005 npm start &
+        FRONTEND_PID=$!
+        echo $FRONTEND_PID > ../frontend.pid
+      env:
+        NODE_ENV: test
+        PORT: 6005
+        REACT_APP_API_URL: http://localhost:6003/api/v1
+
+    - name: Wait for services
+      timeout-minutes: 5
+      run: |
+        echo "Waiting for backend..."
+        timeout 120s bash -c 'until curl -s http://localhost:6003/health > /dev/null 2>&1; do sleep 3; done'
+        
+        echo "Waiting for frontend..."  
+        timeout 120s bash -c 'until curl -s http://localhost:6005 > /dev/null 2>&1; do sleep 3; done'
+        
+        echo "Both services are ready!"
+
+    - name: Run Node.js E2E tests
+      timeout-minutes: 5
+      run: |
+        cd 2-react-migrated-version
+        node e2e-tests.js
+      env:
+        FRONTEND_URL: http://localhost:6005
+        BACKEND_URL: http://localhost:6003
+
+    - name: Test basic API endpoints
+      run: |
+        echo "Testing API endpoints..."
+        curl -f http://localhost:6003/health || (echo "Health check failed" && exit 1)
+        curl -f http://localhost:6003/api/v1/products || (echo "Products API failed" && exit 1)
+        echo "API endpoints working!"
+
+    - name: Test frontend loading
+      run: |
+        echo "Testing frontend..."
+        curl -f http://localhost:6005 || (echo "Frontend failed to load" && exit 1)
+        echo "Frontend loading successfully!"
+
+    - name: Cleanup
+      if: always()
+      run: |
+        if [ -f 2-react-migrated-version/backend.pid ]; then
+          kill $(cat 2-react-migrated-version/backend.pid) 2>/dev/null || true
+        fi
+        if [ -f 2-react-migrated-version/frontend.pid ]; then
+          kill $(cat 2-react-migrated-version/frontend.pid) 2>/dev/null || true  
+        fi
+        pkill -f "node.*server.js" || true
+        pkill -f "react-scripts start" || true
+        pkill -f "serve -s build" || true
+
+    - name: Success notification
+      if: success()
+      run: |
+        echo "🎉 Simple E2E tests passed!"
+        echo "✅ Backend API working"
+        echo "✅ Frontend serving"
+        echo "✅ E2E happy flows working"
+        echo "🚀 System ready for full E2E testing!"

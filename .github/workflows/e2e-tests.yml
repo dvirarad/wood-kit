@@ -1,0 +1,267 @@
+name: E2E Tests Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    # Run E2E tests daily at 02:00 UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  api-e2e-tests:
+    name: API E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    services:
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: password123
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --username admin --password password123 --eval 'db.runCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          2-react-migrated-version/backend/package-lock.json
+          package-lock.json
+
+    - name: Install backend dependencies
+      run: |
+        cd 2-react-migrated-version/backend
+        npm ci
+
+    - name: Install root dependencies for E2E tests
+      run: |
+        npm ci
+
+    - name: Wait for MongoDB
+      timeout-minutes: 2
+      run: |
+        echo "Waiting for MongoDB..."
+        timeout 90s bash -c 'until mongosh --host localhost:27017 --username admin --password password123 --eval "print(\"Connected\")" --quiet 2>/dev/null; do 
+          echo "Waiting for MongoDB..."; 
+          sleep 2; 
+        done'
+
+    - name: Start backend server
+      run: |
+        cd 2-react-migrated-version/backend
+        NODE_ENV=test PORT=6003 MONGODB_URI=mongodb://admin:password123@localhost:27017/woodkits-e2e-test?authSource=admin npm start &
+        echo $! > ../backend.pid
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://admin:password123@localhost:27017/woodkits-e2e-test?authSource=admin
+
+    - name: Wait for backend to be ready
+      timeout-minutes: 3
+      run: |
+        echo "Waiting for backend server..."
+        timeout 120s bash -c 'until curl -s http://localhost:6003/health > /dev/null 2>&1; do 
+          echo "Waiting for backend server..."; 
+          sleep 3; 
+        done'
+        echo "Backend server is ready!"
+
+    - name: Run API E2E tests (Jest-based)
+      timeout-minutes: 10
+      run: |
+        cd 2-react-migrated-version/backend
+        npm test -- --testPathPattern=complete-product-flow --detectOpenHandles --forceExit --testTimeout=60000 --verbose
+      env:
+        NODE_ENV: test
+        MONGODB_TEST_URI: mongodb://admin:password123@localhost:27017/woodkits-e2e-test?authSource=admin
+        ADMIN_USERNAME: admin
+        ADMIN_PASSWORD: admin123
+
+    - name: Run Node.js E2E happy flow tests
+      timeout-minutes: 5
+      run: |
+        node 2-react-migrated-version/e2e-tests.js
+      env:
+        NODE_ENV: test
+
+    - name: Cleanup backend server
+      if: always()
+      run: |
+        if [ -f 2-react-migrated-version/backend.pid ]; then
+          kill $(cat 2-react-migrated-version/backend.pid) 2>/dev/null || true
+          rm 2-react-migrated-version/backend.pid
+        fi
+        pkill -f "node.*server.js" || true
+
+    - name: Upload API test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-e2e-test-results
+        path: |
+          2-react-migrated-version/backend/coverage/
+        retention-days: 7
+
+  frontend-e2e-tests:
+    name: Frontend E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    services:
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: password123
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --username admin --password password123 --eval 'db.runCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          2-react-migrated-version/backend/package-lock.json
+          2-react-migrated-version/frontend/package-lock.json
+          package-lock.json
+
+    - name: Install dependencies
+      run: |
+        # Backend dependencies
+        cd 2-react-migrated-version/backend
+        npm ci
+        
+        # Frontend dependencies  
+        cd ../frontend
+        npm ci
+        
+        # Root dependencies (includes Playwright)
+        cd ../..
+        npm ci
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps chromium
+
+    - name: Build frontend
+      run: |
+        cd 2-react-migrated-version/frontend
+        npm run build
+      env:
+        REACT_APP_API_URL: http://localhost:6003/api/v1
+        GENERATE_SOURCEMAP: false
+
+    - name: Start backend server  
+      run: |
+        cd 2-react-migrated-version/backend
+        NODE_ENV=test PORT=6003 MONGODB_URI=mongodb://admin:password123@localhost:27017/woodkits-e2e-test?authSource=admin npm start &
+        echo $! > ../backend.pid
+      env:
+        NODE_ENV: test
+        MONGODB_URI: mongodb://admin:password123@localhost:27017/woodkits-e2e-test?authSource=admin
+
+    - name: Start frontend server
+      run: |
+        cd 2-react-migrated-version/frontend
+        PORT=3000 npm start &
+        echo $! > ../frontend.pid
+      env:
+        PORT: 3000
+        REACT_APP_API_URL: http://localhost:6003/api/v1
+
+    - name: Wait for services to be ready
+      timeout-minutes: 5
+      run: |
+        echo "Waiting for backend..."
+        timeout 120s bash -c 'until curl -s http://localhost:6003/health > /dev/null 2>&1; do sleep 3; done'
+        
+        echo "Waiting for frontend..."  
+        timeout 120s bash -c 'until curl -s http://localhost:3000 > /dev/null 2>&1; do sleep 3; done'
+        
+        echo "Both services are ready!"
+
+    - name: Run Playwright E2E tests
+      timeout-minutes: 15
+      run: |
+        npx playwright test --config=playwright.config.js
+      env:
+        CI: true
+
+    - name: Cleanup servers
+      if: always()
+      run: |
+        if [ -f 2-react-migrated-version/backend.pid ]; then
+          kill $(cat 2-react-migrated-version/backend.pid) 2>/dev/null || true
+          rm 2-react-migrated-version/backend.pid
+        fi
+        if [ -f 2-react-migrated-version/frontend.pid ]; then
+          kill $(cat 2-react-migrated-version/frontend.pid) 2>/dev/null || true
+          rm 2-react-migrated-version/frontend.pid
+        fi
+        pkill -f "node.*server.js" || true
+        pkill -f "react-scripts start" || true
+
+    - name: Upload Playwright test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-test-results
+        path: |
+          playwright-report/
+          test-results/
+        retention-days: 7
+
+  e2e-summary:
+    name: E2E Test Summary
+    runs-on: ubuntu-latest
+    needs: [api-e2e-tests, frontend-e2e-tests]
+    if: always()
+    
+    steps:
+    - name: Success notification
+      if: needs.api-e2e-tests.result == 'success' && needs.frontend-e2e-tests.result == 'success'
+      run: |
+        echo "🎉 All E2E tests passed successfully!"
+        echo "✅ API E2E tests: PASSED"
+        echo "✅ Frontend E2E tests: PASSED"
+        echo "🚀 System is ready for production!"
+
+    - name: Partial success notification  
+      if: (needs.api-e2e-tests.result == 'success' && needs.frontend-e2e-tests.result != 'success') || (needs.api-e2e-tests.result != 'success' && needs.frontend-e2e-tests.result == 'success')
+      run: |
+        echo "⚠️ E2E tests completed with mixed results"
+        echo "API E2E tests: ${{ needs.api-e2e-tests.result }}"
+        echo "Frontend E2E tests: ${{ needs.frontend-e2e-tests.result }}"
+        echo "🔧 Review the failing test suite"
+
+    - name: Failure notification
+      if: needs.api-e2e-tests.result == 'failure' && needs.frontend-e2e-tests.result == 'failure'
+      run: |
+        echo "❌ E2E tests failed!"
+        echo "❌ API E2E tests: FAILED" 
+        echo "❌ Frontend E2E tests: FAILED"
+        echo "🔧 Fix the issues before deploying"
+        exit 1

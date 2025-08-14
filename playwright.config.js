@@ -23,6 +23,12 @@ module.exports = defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+    
+    /* Screenshot on failure */
+    screenshot: 'only-on-failure',
+    
+    /* Video recording */
+    video: 'retain-on-failure',
   },
 
   /* Configure projects for major browsers */
@@ -64,15 +70,15 @@ module.exports = defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: [
+  webServer: process.env.CI ? [] : [
     {
-      command: 'cd backend && npm start',
-      url: 'http://localhost:6003',
+      command: 'cd 2-react-migrated-version/backend && npm start',
+      url: 'http://localhost:6003/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
     },
     {
-      command: 'cd frontend && npm start',
+      command: 'cd 2-react-migrated-version/frontend && npm start',
       url: 'http://localhost:3000',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
