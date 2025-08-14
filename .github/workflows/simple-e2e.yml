@@ -46,6 +46,8 @@ jobs:
         npm ci
         cd ../frontend  
         npm ci
+        cd ../..
+        npm install axios
 
     - name: Build frontend
       run: |
@@ -63,9 +65,9 @@ jobs:
         BACKEND_PID=$!
         echo $BACKEND_PID > ../backend.pid
         
-        # Start frontend
+        # Start frontend using serve to serve built files
         cd ../frontend
-        PORT=6005 npm start &
+        PORT=6005 npx serve -s build -p 6005 &
         FRONTEND_PID=$!
         echo $FRONTEND_PID > ../frontend.pid
       env:
@@ -88,6 +90,8 @@ jobs:
       timeout-minutes: 5
       run: |
         cd 2-react-migrated-version
+        # Install axios if not present
+        npm list axios || npm install axios
         node e2e-tests.js
       env:
         FRONTEND_URL: http://localhost:6005
