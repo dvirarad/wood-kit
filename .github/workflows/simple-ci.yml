@@ -21,7 +21,7 @@ jobs:
         ports:
           - 27017:27017
         options: >-
-          --health-cmd mongosh
+          --health-cmd "mongosh --eval 'db.runCommand(\"ping\").ok'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -35,7 +35,9 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: ./2-react-migrated-version/backend/package-lock.json
+        cache-dependency-path: |
+          2-react-migrated-version/backend/package-lock.json
+          2-react-migrated-version/frontend/package-lock.json
 
     - name: Install backend dependencies
       run: |
@@ -51,7 +53,7 @@ jobs:
       timeout-minutes: 2
       run: |
         echo "Waiting for MongoDB..."
-        timeout 90s bash -c 'until mongosh --host localhost:27017 --eval "print(\"Connected\")" --quiet 2>/dev/null; do 
+        timeout 90s bash -c 'until mongosh --host localhost:27017 --username root --password password --eval "print(\"Connected\")" --quiet 2>/dev/null; do 
           echo "Waiting for MongoDB..."; 
           sleep 2; 
         done' || {
@@ -65,7 +67,7 @@ jobs:
         npm test -- --testPathIgnorePatterns=complete-product-flow --detectOpenHandles --forceExit --testTimeout=30000
       env:
         NODE_ENV: test
-        MONGODB_URI: mongodb://localhost:27017/woodkits-test
+        MONGODB_URI: mongodb://root:password@localhost:27017/woodkits-test?authSource=admin
 
     - name: Build frontend
       timeout-minutes: 5
@@ -116,7 +118,7 @@ jobs:
         kill $SERVER_PID 2>/dev/null || true
       env:
         NODE_ENV: test
-        MONGODB_URI: mongodb://localhost:27017/woodkits-test
+        MONGODB_URI: mongodb://root:password@localhost:27017/woodkits-test?authSource=admin
 
     - name: Success notification
       if: success()
