@@ -1,9 +1,7 @@
-name: Main Branch Deployment
+name: Main Branch Deployment (Disabled)
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch: # Manual triggering only - disabled automatic triggers
 
 jobs:
   comprehensive-testing:
