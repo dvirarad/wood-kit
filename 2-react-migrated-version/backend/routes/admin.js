@@ -546,10 +546,10 @@ router.get('/reviews/pending', adminOnly, async (req, res) => {
   }
 });
 
-// @desc    Get all products (Admin only)
+// @desc    Get all products
 // @route   GET /api/v1/admin/products
-// @access  Private/Admin
-router.get('/products', adminOnly, async (req, res) => {
+// @access  Public
+router.get('/products', async (req, res) => {
   try {
     const products = await Product.find()
       .sort({ createdAt: -1 })
@@ -569,10 +569,10 @@ router.get('/products', adminOnly, async (req, res) => {
   }
 });
 
-// @desc    Create new product (Admin only)
+// @desc    Create new product
 // @route   POST /api/v1/admin/products
-// @access  Private/Admin
-router.post('/products', adminOnly, async (req, res) => {
+// @access  Public
+router.post('/products', async (req, res) => {
   try {
     const productData = req.body;
     
@@ -599,10 +599,10 @@ router.post('/products', adminOnly, async (req, res) => {
   }
 });
 
-// @desc    Update product (Admin only)
+// @desc    Update product
 // @route   PUT /api/v1/admin/products/:id
-// @access  Private/Admin
-router.put('/products/:id', adminOnly, async (req, res) => {
+// @access  Public
+router.put('/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -635,10 +635,10 @@ router.put('/products/:id', adminOnly, async (req, res) => {
   }
 });
 
-// @desc    Delete product (Admin only)
+// @desc    Delete product
 // @route   DELETE /api/v1/admin/products/:id
-// @access  Private/Admin
-router.delete('/products/:id', adminOnly, async (req, res) => {
+// @access  Public
+router.delete('/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
