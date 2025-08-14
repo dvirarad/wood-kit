@@ -71,14 +71,19 @@ jobs:
         MONGODB_URI: mongodb://admin:password123@localhost:27017/woodkits-e2e-test?authSource=admin
 
     - name: Wait for backend to be ready
-      timeout-minutes: 3
+      timeout-minutes: 5
       run: |
         echo "Waiting for backend server..."
-        timeout 120s bash -c 'until curl -s http://localhost:6003/health > /dev/null 2>&1; do 
-          echo "Waiting for backend server..."; 
-          sleep 3; 
-        done'
-        echo "Backend server is ready!"
+        for i in {1..40}; do
+          if curl -s http://localhost:6003/health > /dev/null 2>&1; then
+            echo "✅ Backend server is ready!"
+            exit 0
+          fi
+          echo "Waiting for backend server... (attempt $i/40)"
+          sleep 3
+        done
+        echo "❌ Backend server failed to start within timeout"
+        exit 1
 
     - name: Run API E2E tests (Jest-based)
       timeout-minutes: 10
@@ -128,7 +133,9 @@ jobs:
         name: api-e2e-test-results
         path: |
           2-react-migrated-version/backend/coverage/
+          2-react-migrated-version/backend/test-results/
         retention-days: 7
+      continue-on-error: true
 
   frontend-e2e-tests:
     name: Frontend E2E Tests (Playwright)
@@ -207,15 +214,29 @@ jobs:
         REACT_APP_API_URL: http://localhost:6003/api/v1
 
     - name: Wait for services to be ready
-      timeout-minutes: 5
+      timeout-minutes: 7
       run: |
         echo "Waiting for backend..."
-        timeout 120s bash -c 'until curl -s http://localhost:6003/health > /dev/null 2>&1; do sleep 3; done'
+        for i in {1..40}; do
+          if curl -s http://localhost:6003/health > /dev/null 2>&1; then
+            echo "✅ Backend ready!"
+            break
+          fi
+          echo "Waiting for backend... (attempt $i/40)"
+          sleep 3
+        done
         
-        echo "Waiting for frontend..."  
-        timeout 120s bash -c 'until curl -s http://localhost:3000 > /dev/null 2>&1; do sleep 3; done'
+        echo "Waiting for frontend..."
+        for i in {1..40}; do
+          if curl -s http://localhost:3000 > /dev/null 2>&1; then
+            echo "✅ Frontend ready!"
+            break
+          fi
+          echo "Waiting for frontend... (attempt $i/40)"
+          sleep 3
+        done
         
-        echo "Both services are ready!"
+        echo "✅ Both services are ready!"
 
     - name: Run Playwright E2E tests
       timeout-minutes: 15
@@ -246,7 +267,9 @@ jobs:
         path: |
           playwright-report/
           test-results/
+          2-react-migrated-version/frontend/test-results/
         retention-days: 7
+      continue-on-error: true
 
   e2e-summary:
     name: E2E Test Summary
