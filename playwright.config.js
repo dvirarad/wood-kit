@@ -70,17 +70,18 @@ module.exports = defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: process.env.CI ? [] : [
+  // Services are started manually in CI, so disable webServer for CI
+  webServer: process.env.CI ? undefined : [
     {
       command: 'cd 2-react-migrated-version/backend && npm start',
       url: 'http://localhost:6003/health',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 120 * 1000,
     },
     {
-      command: 'cd 2-react-migrated-version/frontend && npm start',
+      command: 'cd 2-react-migrated-version/frontend && npm run dev',
       url: 'http://localhost:3000',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 120 * 1000,
     },
   ],
