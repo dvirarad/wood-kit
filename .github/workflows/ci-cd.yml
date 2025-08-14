@@ -1,10 +1,7 @@
-name: Wood Kits CI/CD Pipeline
+name: Wood Kits CI/CD Pipeline (Disabled)
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch: # Manual triggering only - disabled automatic triggers
 
 jobs:
   test:
