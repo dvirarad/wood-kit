@@ -1,0 +1,36 @@
+name: Basic Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  basic-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Validate project structure
+      run: |
+        echo "🔍 Checking project structure..."
+        ls -la
+        echo "📁 React version directory:"
+        ls -la 2-react-migrated-version/
+        echo "✅ Basic validation passed!"
+
+    - name: Success
+      run: |
+        echo "🎉 Basic test pipeline completed successfully!"
+        echo "Project structure is valid"
+        echo "GitHub Actions is working!"
