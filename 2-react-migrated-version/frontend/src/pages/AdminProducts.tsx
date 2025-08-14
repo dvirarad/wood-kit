@@ -257,7 +257,7 @@ const AdminProducts: React.FC = () => {
     });
   };
 
-  const updateDimension = (dimension: 'length' | 'width' | 'height', field: string, value: any) => {
+  const updateDimension = (dimension: 'width' | 'height' | 'depth', field: string, value: any) => {
     if (!editingProduct) return;
     
     setEditingProduct({
@@ -265,7 +265,7 @@ const AdminProducts: React.FC = () => {
       dimensions: {
         ...editingProduct.dimensions,
         [dimension]: {
-          ...editingProduct.dimensions[dimension],
+          ...(editingProduct.dimensions?.[dimension] || {}),
           [field]: value
         }
       }
@@ -333,12 +333,12 @@ const AdminProducts: React.FC = () => {
   };
 
   const calculateExamplePrice = (product: AdminProduct): number => {
-    const { length, width, height } = product.dimensions;
-    const lengthCost = length ? (length.default - length.min) * length.multiplier : 0;
+    const { width, height, depth } = product.dimensions || {};
     const widthCost = width ? (width.default - width.min) * width.multiplier : 0;
     const heightCost = height ? (height.default - height.min) * height.multiplier : 0;
+    const depthCost = depth ? (depth.default - depth.min) * depth.multiplier : 0;
     
-    let totalPrice = product.basePrice + lengthCost + widthCost + heightCost;
+    let totalPrice = product.basePrice + widthCost + heightCost + depthCost;
     
     // Add color cost (40% increase) for example calculation - simplified for now
     totalPrice += totalPrice * 0.4;
@@ -514,11 +514,11 @@ const AdminProducts: React.FC = () => {
                   <Box>
                     <Divider sx={{ my: 2 }} />
                     <Typography variant="h6" gutterBottom>הגדרות ממדים</Typography>
-                    {(['length', 'width', 'height'] as const).map((dimension) => (
+                    {(['width', 'height', 'depth'] as const).map((dimension) => (
                       <Card key={dimension} sx={{ mb: 2 }}>
                         <CardContent>
                           <Typography variant="subtitle1" gutterBottom>
-                            {dimension === 'length' ? 'אורך' : dimension === 'width' ? 'רוחב' : 'גובה'} (ס"מ)
+                            {dimension === 'width' ? 'רוחב' : dimension === 'height' ? 'גובה' : 'עומק'} (ס"מ)
                           </Typography>
                           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                             <TextField
@@ -526,7 +526,7 @@ const AdminProducts: React.FC = () => {
                               type="number"
                               label="מינימום"
                               sx={{ flex: '1 1 120px' }}
-                              value={editingProduct.dimensions[dimension].min}
+                              value={editingProduct.dimensions?.[dimension]?.min || 0}
                               onChange={(e) => updateDimension(dimension, 'min', Number(e.target.value))}
                             />
                             <TextField
@@ -534,7 +534,7 @@ const AdminProducts: React.FC = () => {
                               type="number"
                               label="מקסימום"
                               sx={{ flex: '1 1 120px' }}
-                              value={editingProduct.dimensions[dimension].max}
+                              value={editingProduct.dimensions?.[dimension]?.max || 0}
                               onChange={(e) => updateDimension(dimension, 'max', Number(e.target.value))}
                             />
                             <TextField
@@ -542,7 +542,7 @@ const AdminProducts: React.FC = () => {
                               type="number"
                               label="ברירת מחדל"
                               sx={{ flex: '1 1 120px' }}
-                              value={editingProduct.dimensions[dimension].default}
+                              value={editingProduct.dimensions?.[dimension]?.default || 0}
                               onChange={(e) => updateDimension(dimension, 'default', Number(e.target.value))}
                             />
                             <TextField
@@ -550,7 +550,7 @@ const AdminProducts: React.FC = () => {
                               type="number"
                               label="מחיר לס&quot;מ"
                               sx={{ flex: '1 1 120px' }}
-                              value={editingProduct.dimensions[dimension].multiplier}
+                              value={editingProduct.dimensions?.[dimension]?.multiplier || 0}
                               onChange={(e) => updateDimension(dimension, 'multiplier', Number(e.target.value))}
                             />
                           </Box>

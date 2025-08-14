@@ -60,9 +60,9 @@ export interface ClientProduct {
   };
   customization?: {
     dimensions: {
-      length?: DimensionConfig;
       width?: DimensionConfig;
       height?: DimensionConfig;
+      depth?: DimensionConfig;
     };
     colorOptions?: ColorConfig;
   };
@@ -263,9 +263,9 @@ class BackendProductService {
 
   // Calculate price based on customizations (frontend calculation for now)
   calculatePrice(productId: string, customizations: { 
-    length?: number; 
     width?: number; 
     height?: number; 
+    depth?: number; 
     color?: string 
   }): number {
     // For now, use frontend calculation
