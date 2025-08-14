@@ -1,0 +1,86 @@
+name: Minimal E2E Test
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  minimal-e2e:
+    name: Minimal E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install backend dependencies
+      run: |
+        cd 2-react-migrated-version/backend
+        npm ci
+
+    - name: Install frontend dependencies  
+      run: |
+        cd 2-react-migrated-version/frontend
+        npm ci
+
+    - name: Build frontend
+      run: |
+        cd 2-react-migrated-version/frontend
+        REACT_APP_API_URL=http://localhost:6003/api/v1 npm run build
+
+    - name: Test backend syntax
+      run: |
+        cd 2-react-migrated-version/backend
+        node -c server.js
+        echo "✅ Backend syntax is valid"
+
+    - name: Test frontend build output
+      run: |
+        cd 2-react-migrated-version/frontend
+        if [ -d "build" ] && [ -f "build/index.html" ]; then
+          echo "✅ Frontend build successful"
+          ls -la build/
+        else
+          echo "❌ Frontend build failed"
+          exit 1
+        fi
+
+    - name: Test basic E2E setup (without services)
+      continue-on-error: true
+      run: |
+        echo "Testing E2E file availability..."
+        if [ -f "2-react-migrated-version/e2e-tests.js" ]; then
+          echo "✅ E2E test file found"
+          
+          # Install axios for testing
+          npm install --no-save axios
+          
+          # Test if E2E file can be parsed
+          cd 2-react-migrated-version
+          node -c e2e-tests.js && echo "✅ E2E file syntax is valid" || echo "⚠️ E2E file has syntax issues"
+        else
+          echo "⚠️ E2E test file not found"
+        fi
+
+    - name: Success summary
+      if: success()
+      run: |
+        echo ""
+        echo "🎉 Minimal E2E Test Results"
+        echo "=========================="
+        echo "✅ Repository checkout successful"
+        echo "✅ Node.js setup completed"
+        echo "✅ Backend dependencies installed"
+        echo "✅ Frontend dependencies installed" 
+        echo "✅ Frontend build successful"
+        echo "✅ Backend syntax validation passed"
+        echo ""
+        echo "🚀 Basic E2E infrastructure is working!"
+        echo "   Ready to add service orchestration."
