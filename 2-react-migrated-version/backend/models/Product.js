@@ -137,7 +137,7 @@ const productSchema = new mongoose.Schema({
 });
 
 // Indexes for better performance
-productSchema.index({ productId: 1 });
+// Note: productId already has unique index from schema definition
 productSchema.index({ category: 1 });
 productSchema.index({ isActive: 1 });
 productSchema.index({ 'ratings.average': -1 });

@@ -51,7 +51,10 @@
       "Bash(echo:*)",
       "WebFetch(domain:github.com)",
       "Bash(gh run list:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(brew services:*)",
+      "Bash(timeout:*)",
+      "Bash(gtimeout:*)"
     ],
     "deny": []
   }
