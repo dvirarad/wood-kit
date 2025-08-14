@@ -1,0 +1,153 @@
+name: Debug E2E Issues
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  debug:
+    name: Debug E2E Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    services:
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: password123
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --username admin --password password123 --eval 'db.runCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Check repository structure
+      run: |
+        echo "=== Repository Structure ==="
+        ls -la
+        echo ""
+        echo "=== 2-react-migrated-version structure ==="
+        ls -la 2-react-migrated-version/
+        echo ""
+        echo "=== Backend structure ==="
+        ls -la 2-react-migrated-version/backend/
+        echo ""
+        echo "=== Frontend structure ==="
+        ls -la 2-react-migrated-version/frontend/
+
+    - name: Check package.json files
+      run: |
+        echo "=== Backend package.json ==="
+        if [ -f "2-react-migrated-version/backend/package.json" ]; then
+          cat 2-react-migrated-version/backend/package.json
+        else
+          echo "Backend package.json not found"
+        fi
+        echo ""
+        echo "=== Frontend package.json ==="
+        if [ -f "2-react-migrated-version/frontend/package.json" ]; then
+          head -30 2-react-migrated-version/frontend/package.json
+        else
+          echo "Frontend package.json not found"
+        fi
+
+    - name: Test MongoDB connection
+      run: |
+        echo "Testing MongoDB connection..."
+        mongosh --host localhost:27017 --username admin --password password123 --eval "print('MongoDB is working')" || echo "MongoDB connection failed"
+
+    - name: Install backend dependencies
+      run: |
+        echo "Installing backend dependencies..."
+        cd 2-react-migrated-version/backend
+        npm ci --prefer-offline --no-audit || {
+          echo "npm ci failed, trying npm install"
+          npm install
+        }
+
+    - name: Test backend server
+      timeout-minutes: 2
+      run: |
+        cd 2-react-migrated-version/backend
+        echo "Testing backend server startup..."
+        
+        echo "Starting server..."
+        NODE_ENV=test PORT=6003 MONGODB_URI=mongodb://admin:password123@localhost:27017/test?authSource=admin npm start &
+        SERVER_PID=$!
+        echo "Server PID: $SERVER_PID"
+        
+        sleep 10
+        
+        echo "Testing health endpoint..."
+        if curl -f http://localhost:6003/health; then
+          echo "✅ Backend health check successful"
+        else
+          echo "❌ Backend health check failed"
+          echo "Checking server logs..."
+          ps aux | grep node || true
+          netstat -tlnp | grep 6003 || true
+        fi
+        
+        kill $SERVER_PID 2>/dev/null || true
+        sleep 2
+
+    - name: Install frontend dependencies
+      run: |
+        echo "Installing frontend dependencies..."
+        cd 2-react-migrated-version/frontend
+        npm ci --prefer-offline --no-audit || {
+          echo "npm ci failed, trying npm install"
+          npm install
+        }
+
+    - name: Test frontend build
+      run: |
+        cd 2-react-migrated-version/frontend
+        echo "Testing frontend build..."
+        REACT_APP_API_URL=http://localhost:6003/api/v1 npm run build || {
+          echo "Frontend build failed"
+          exit 1
+        }
+        
+        echo "Build output:"
+        ls -la build/
+
+    - name: Test E2E file
+      run: |
+        echo "Checking E2E test file..."
+        if [ -f "2-react-migrated-version/e2e-tests.js" ]; then
+          echo "E2E test file found"
+          head -20 2-react-migrated-version/e2e-tests.js
+        else
+          echo "E2E test file not found"
+        fi
+
+    - name: Test axios availability
+      run: |
+        echo "Testing axios installation..."
+        npm install --no-save axios
+        node -e "const axios = require('axios'); console.log('Axios version:', axios.VERSION || 'installed');"
+
+    - name: Summary
+      run: |
+        echo ""
+        echo "=== Debug Summary ==="
+        echo "Repository structure: ✅"
+        echo "MongoDB connection: $(mongosh --host localhost:27017 --username admin --password password123 --eval "print('OK')" --quiet 2>/dev/null || echo 'FAILED')"
+        echo "Backend dependencies: $([ -d "2-react-migrated-version/backend/node_modules" ] && echo 'OK' || echo 'FAILED')"
+        echo "Frontend dependencies: $([ -d "2-react-migrated-version/frontend/node_modules" ] && echo 'OK' || echo 'FAILED')"
+        echo "Frontend build: $([ -d "2-react-migrated-version/frontend/build" ] && echo 'OK' || echo 'FAILED')"
+        echo "E2E test file: $([ -f "2-react-migrated-version/e2e-tests.js" ] && echo 'OK' || echo 'FAILED')"
