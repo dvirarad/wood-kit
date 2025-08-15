@@ -574,7 +574,25 @@ router.get('/products', async (req, res) => {
 // @access  Public
 router.post('/products', async (req, res) => {
   try {
-    const rawData = req.body;
+    let rawData = req.body;
+    console.log('Received Content-Type:', req.get('Content-Type'));
+    
+    // Handle text/plain content type by parsing JSON manually
+    if (req.get('Content-Type')?.includes('text/plain') && typeof rawData === 'string') {
+      try {
+        rawData = JSON.parse(rawData);
+        console.log('Parsed JSON from text/plain:', JSON.stringify(rawData, null, 2));
+      } catch (e) {
+        console.log('Failed to parse JSON from text/plain:', e.message);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid JSON format',
+          error: 'Request body must be valid JSON'
+        });
+      }
+    } else {
+      console.log('Raw request body:', JSON.stringify(rawData, null, 2));
+    }
     
     // Remove MongoDB internal fields and sanitize data for new product creation
     const {

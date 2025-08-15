@@ -40,6 +40,9 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Handle text/plain content type for JSON data (needed for some frontend requests)
+app.use('/api/v1/admin/products', express.text({ type: 'text/plain', limit: '10mb' }));
+
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
