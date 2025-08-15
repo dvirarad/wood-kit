@@ -58,6 +58,7 @@ interface AdminProduct {
       max: number;
       default: number;
       multiplier: number;
+      step?: number;
       visible?: boolean;
       editable?: boolean;
     };
@@ -144,9 +145,9 @@ const AdminProducts: React.FC = () => {
       basePrice: 0,
       currency: 'NIS',
       dimensions: {
-        width: { min: 10, max: 300, default: 50, multiplier: 1.0, visible: true, editable: true },
-        height: { min: 10, max: 300, default: 100, multiplier: 1.0, visible: true, editable: true },
-        depth: { min: 10, max: 300, default: 30, multiplier: 1.0, visible: true, editable: true }
+        width: { min: 10, max: 300, default: 50, multiplier: 1.0, step: 5, visible: true, editable: true },
+        height: { min: 10, max: 300, default: 100, multiplier: 1.0, step: 5, visible: true, editable: true },
+        depth: { min: 10, max: 300, default: 30, multiplier: 1.0, step: 1, visible: true, editable: true }
       },
       options: {
         lacquer: { available: true, price: 45 },
@@ -583,6 +584,15 @@ const AdminProducts: React.FC = () => {
                               sx={{ flex: '1 1 120px' }}
                               value={editingProduct.dimensions?.[dimension]?.multiplier || 0}
                               onChange={(e) => updateDimension(dimension, 'multiplier', Number(e.target.value))}
+                            />
+                            <TextField
+                              size="small"
+                              type="number"
+                              label="צעדים (ס&quot;מ)"
+                              sx={{ flex: '1 1 120px' }}
+                              value={editingProduct.dimensions?.[dimension]?.step || 1}
+                              onChange={(e) => updateDimension(dimension, 'step', Number(e.target.value))}
+                              inputProps={{ min: 0.1, step: 0.1 }}
                             />
                           </Box>
                           

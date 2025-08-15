@@ -3,7 +3,8 @@ import { api } from './api';
 
 // Backend API interfaces - based on actual API response
 interface BackendProduct {
-  id: string;
+  _id?: string;
+  id?: string;
   productId: string;
   basePrice: number;
   currency: string;
@@ -13,6 +14,9 @@ interface BackendProduct {
       max: number;
       default: number;
       multiplier: number;
+      step?: number;
+      visible?: boolean;
+      editable?: boolean;
     };
   };
   options: {
@@ -98,9 +102,9 @@ class BackendProductService {
             min: config.min || 0,
             max: config.max || 100,
             default: config.default || 50,
-            step: 5, // Default step
-            visible: true,
-            editable: true,
+            step: config.step || 1,
+            visible: config.visible !== false,
+            editable: config.editable !== false,
             priceModifier: config.multiplier || 0
           };
         }
@@ -125,10 +129,16 @@ class BackendProductService {
       description: productDescriptions,
       category: backendProduct.category || '',
       basePrice: backendProduct.basePrice || 0,
-      images: (backendProduct.images || []).map(img => ({
-        url: img?.url || '',
-        isPrimary: img?.isPrimary || false
-      })),
+      images: (backendProduct.images || [])
+        .map(img => ({
+          url: img?.url || '',
+          isPrimary: img?.isPrimary || false
+        }))
+        .filter(img => img.url && img.url.trim() !== '') // Remove empty URLs
+        .concat(backendProduct.images?.length === 0 ? [{ // Add placeholder if no images
+          url: 'https://via.placeholder.com/400x300?text=No+Image',
+          isPrimary: true
+        }] : []),
       inventory: {
         inStock: backendProduct.inventory?.inStock || false,
         quantity: backendProduct.inventory?.stockLevel || 0
@@ -152,7 +162,8 @@ class BackendProductService {
       'garden-bench': { he: 'ספסל גן', en: 'Garden Bench' },
       'stairs': { he: 'מדרגות מותאמות', en: 'Custom Stairs' },
       'dog-bed': { he: 'מיטת כלב', en: 'Dog Bed' },
-      'wooden-planter': { he: 'עציץ עץ', en: 'Wooden Planter' }
+      'wooden-planter': { he: 'עציץ עץ', en: 'Wooden Planter' },
+      'test-steps': { he: 'מדרגות מבחן', en: 'Test Steps' }
     };
     
     return nameMap[productId] || { he: productId, en: productId };
@@ -184,6 +195,10 @@ class BackendProductService {
       'wooden-planter': { 
         he: 'עציץ עץ מעוצב לגינה שלכם', 
         en: 'Designed wooden planter for your garden' 
+      },
+      'test-steps': {
+        he: 'מוצר מדרגות מבחן עם קביעת מידות נכונה לבדיקת אינטגרציה בין אדמין ולקוח.',
+        en: 'Test steps product with proper dimension configuration for testing admin/client integration.'
       }
     };
     
@@ -261,19 +276,57 @@ class BackendProductService {
     }
   }
 
-  // Calculate price based on customizations (frontend calculation)
-  calculatePrice(productId: string, customizations: { 
+  // Calculate price using backend API
+  async calculatePrice(productId: string, customizations: { 
     width?: number; 
     height?: number; 
     depth?: number; 
     length?: number; // Support old format for stairs
     steps?: number;  // Support steps for stairs
     color?: string 
+  }): Promise<number> {
+    try {
+      const response = await api.post<{
+        success: boolean;
+        data: {
+          pricing: {
+            totalPrice: number;
+            basePrice: number;
+            sizeAdjustment: number;
+            colorCost: number;
+            optionsCost: number;
+          };
+        };
+      }>(`/products/${productId}/calculate-price`, {
+        configuration: {
+          dimensions: customizations,
+          color: customizations.color
+        }
+      });
+
+      if (response.success && response.data?.pricing) {
+        return response.data.pricing.totalPrice;
+      }
+
+      // Fallback to simplified frontend calculation if backend fails
+      console.warn('Backend price calculation failed, using fallback');
+      return this.fallbackCalculatePrice(productId, customizations);
+    } catch (error) {
+      console.error('Backend price calculation error:', error);
+      return this.fallbackCalculatePrice(productId, customizations);
+    }
+  }
+
+  // Fallback price calculation for when backend is unavailable
+  private fallbackCalculatePrice(productId: string, customizations: { 
+    width?: number; 
+    height?: number; 
+    depth?: number; 
+    length?: number;
+    steps?: number;
+    color?: string 
   }): number {
     try {
-      // Find the product data from the last fetched products
-      // This is a simplified calculation - in production, this should call backend API
-      
       // Base prices for known products
       const productPrices: { [key: string]: { basePrice: number, dimensions: any } } = {
         'amsterdam-bookshelf': { 
@@ -299,12 +352,20 @@ class BackendProductService {
             height: { min: 50, max: 150, default: 100, multiplier: 0.6 },
             steps: { min: 3, max: 12, default: 6, multiplier: 15 }
           }
+        },
+        'test-steps': {
+          basePrice: 150,
+          dimensions: {
+            width: { min: 30, max: 100, default: 60, multiplier: 0.4 },
+            height: { min: 20, max: 80, default: 40, multiplier: 0.3 },
+            steps: { min: 2, max: 8, default: 4, multiplier: 20 }
+          }
         }
       };
 
       const productData = productPrices[productId];
       if (!productData) {
-        console.warn(`No price data for product: ${productId}`);
+        console.warn(`No fallback price data for product: ${productId}`);
         return 0;
       }
 
@@ -334,7 +395,7 @@ class BackendProductService {
 
       return Math.max(Math.round(totalPrice * 100) / 100, 0);
     } catch (error) {
-      console.error('Price calculation error:', error);
+      console.error('Fallback price calculation error:', error);
       return 0;
     }
   }
@@ -348,7 +409,11 @@ class BackendProductService {
           Authorization: `Bearer ${token}`
         }
       });
-      return response.products;
+      // Map _id to id for frontend compatibility
+      return response.products.map((product: any) => ({
+        ...product,
+        id: product._id || product.id
+      }));
     } catch (error) {
       console.error('Failed to fetch admin products:', error);
       return [];

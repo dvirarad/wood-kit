@@ -35,7 +35,7 @@ const seedData = {
       },
       category: 'bookshelf',
       tags: ['modern', 'minimalist', 'customizable'],
-      images: [{ url: '/images/amsterdam-bookshelf-1.jpg', alt: 'Amsterdam Bookshelf', isPrimary: true }],
+      images: [{ url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=300', alt: 'Amsterdam Bookshelf', isPrimary: true }],
       isActive: true,
       inventory: { inStock: true, stockLevel: 50, lowStockThreshold: 5 },
       ratings: { average: 4.8, count: 24 }
@@ -64,7 +64,7 @@ const seedData = {
       },
       category: 'bookshelf',
       tags: ['classic', 'elegant', 'traditional'],
-      images: [{ url: '/images/venice-bookshelf-1.jpg', alt: 'Venice Bookshelf', isPrimary: true }],
+      images: [{ url: 'https://images.unsplash.com/photo-1503602642458-232111445657?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=300', alt: 'Venice Bookshelf', isPrimary: true }],
       isActive: true,
       inventory: { inStock: true, stockLevel: 30, lowStockThreshold: 5 },
       ratings: { average: 4.6, count: 18 }
@@ -95,7 +95,7 @@ const seedData = {
       },
       category: 'stairs',
       tags: ['custom', 'indoor', 'functional'],
-      images: [{ url: '/images/stairs-1.jpg', alt: 'Custom Wooden Stairs', isPrimary: true }],
+      images: [{ url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=300', alt: 'Custom Wooden Stairs', isPrimary: true }],
       isActive: true,
       inventory: { inStock: true, stockLevel: 15, lowStockThreshold: 3 },
       ratings: { average: 4.9, count: 12 }
@@ -125,7 +125,7 @@ const seedData = {
       },
       category: 'outdoor',
       tags: ['outdoor', 'garden', 'seating'],
-      images: [{ url: '/images/garden-bench-1.jpg', alt: 'Garden Bench', isPrimary: true }],
+      images: [{ url: 'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=300', alt: 'Garden Bench', isPrimary: true }],
       isActive: true,
       inventory: { inStock: true, stockLevel: 25, lowStockThreshold: 5 },
       ratings: { average: 4.7, count: 31 }
@@ -154,7 +154,7 @@ const seedData = {
       },
       category: 'outdoor',
       tags: ['planter', 'garden', 'plants'],
-      images: [{ url: '/images/wooden-planter-1.jpg', alt: 'Wooden Planter', isPrimary: true }],
+      images: [{ url: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=300', alt: 'Wooden Planter', isPrimary: true }],
       isActive: true,
       inventory: { inStock: true, stockLevel: 40, lowStockThreshold: 8 },
       ratings: { average: 4.5, count: 27 }
@@ -184,10 +184,40 @@ const seedData = {
       },
       category: 'pet',
       tags: ['pet', 'bed', 'comfort'],
-      images: [{ url: '/images/dog-bed-1.jpg', alt: 'Wooden Dog Bed', isPrimary: true }],
+      images: [{ url: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=300', alt: 'Wooden Dog Bed', isPrimary: true }],
       isActive: true,
       inventory: { inStock: true, stockLevel: 20, lowStockThreshold: 4 },
       ratings: { average: 4.8, count: 19 }
+    },
+    {
+      productId: 'test-steps',
+      name: {
+        en: 'Test Steps',
+        he: 'מדרגות מבחן',
+        es: 'Escalones de Prueba'
+      },
+      description: {
+        en: 'Test steps product with proper dimension configuration for testing admin/client integration.',
+        he: 'מוצר מדרגות מבחן עם קביעת מידות נכונה לבדיקת אינטגרציה בין אדמין ולקוח.',
+        es: 'Producto de escalones de prueba con configuración de dimensiones adecuada para probar la integración admin/cliente.'
+      },
+      basePrice: 150,
+      currency: 'NIS',
+      dimensions: {
+        width: { min: 30, max: 100, default: 60, multiplier: 0.4, step: 5, visible: true, editable: true },
+        height: { min: 20, max: 80, default: 40, multiplier: 0.3, step: 10, visible: true, editable: true },
+        steps: { min: 2, max: 8, default: 4, multiplier: 20, step: 1, visible: true, editable: true }
+      },
+      options: {
+        lacquer: { available: true, price: 35 },
+        handrail: { available: true, price: 80 }
+      },
+      category: 'stairs',
+      tags: ['test', 'steps', 'customizable'],
+      images: [{ url: 'https://images.unsplash.com/photo-1563694983011-6f4d90358083?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=300', alt: 'Test Steps', isPrimary: true }],
+      isActive: true,
+      inventory: { inStock: true, stockLevel: 10, lowStockThreshold: 2 },
+      ratings: { average: 4.5, count: 8 }
     }
   ]
 };

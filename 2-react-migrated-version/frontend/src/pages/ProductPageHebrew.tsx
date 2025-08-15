@@ -81,7 +81,7 @@ const ProductPageHebrew: React.FC = () => {
   useEffect(() => {
     if (!product) return;
 
-    const calculatePrice = () => {
+    const calculatePrice = async () => {
       try {
         setCalculatingPrice(true);
         const customizations = {
@@ -92,7 +92,7 @@ const ProductPageHebrew: React.FC = () => {
           steps: dimensions.steps,
           color: selectedColor
         };
-        const totalPrice = backendProductService.calculatePrice(product.productId, customizations);
+        const totalPrice = await backendProductService.calculatePrice(product.productId, customizations);
         setCalculatedPrice(totalPrice);
       } catch (err) {
         console.error('Price calculation failed:', err);

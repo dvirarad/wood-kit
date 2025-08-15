@@ -21,6 +21,11 @@ const dimensionSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  step: {
+    type: Number,
+    default: 1,
+    min: 0.1
+  },
   visible: {
     type: Boolean,
     default: true
