@@ -100,6 +100,8 @@ const AdminProducts: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState<string>('');
+  const [newImageAlt, setNewImageAlt] = useState<string>('');
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -127,6 +129,11 @@ const AdminProducts: React.FC = () => {
     } catch (error) {
       console.error('Failed to load products:', error);
     }
+  };
+
+  const resetImageForm = () => {
+    setNewImageUrl('');
+    setNewImageAlt('');
   };
 
   const handleAddProduct = () => {
@@ -169,11 +176,13 @@ const AdminProducts: React.FC = () => {
       inventory: { inStock: true, stockLevel: 0, lowStockThreshold: 5 }
     };
     setEditingProduct(newProduct);
+    resetImageForm();
     setDialogOpen(true);
   };
 
   const handleEditProduct = (product: AdminProduct) => {
     setEditingProduct({ ...product });
+    resetImageForm();
     setDialogOpen(true);
   };
 
@@ -191,6 +200,7 @@ const AdminProducts: React.FC = () => {
       
       setDialogOpen(false);
       setEditingProduct(null);
+      resetImageForm();
       loadProducts(); // Refresh the list
     } catch (error) {
       console.error('Failed to save product:', error);
@@ -206,27 +216,24 @@ const AdminProducts: React.FC = () => {
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || !editingProduct) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string;
-        const newImage = {
-          url: imageUrl,
-          alt: file.name || 'תמונת מוצר',
-          isPrimary: editingProduct.images.length === 0 // First image is primary by default
-        };
-        
-        setEditingProduct({
-          ...editingProduct,
-          images: [...editingProduct.images, newImage]
-        });
-      };
-      reader.readAsDataURL(file);
+  const handleAddImageUrl = () => {
+    if (!editingProduct || !newImageUrl.trim()) return;
+
+    const newImage = {
+      url: newImageUrl.trim(),
+      alt: newImageAlt.trim() || 'תמונת מוצר',
+      isPrimary: editingProduct.images.length === 0 // First image is primary by default
+    };
+    
+    setEditingProduct({
+      ...editingProduct,
+      images: [...editingProduct.images, newImage]
     });
+    
+    // Clear the input fields
+    setNewImageUrl('');
+    setNewImageAlt('');
   };
 
   const handleDeleteImage = (imageIndex: number) => {
@@ -628,26 +635,34 @@ const AdminProducts: React.FC = () => {
                     <Typography variant="h6" gutterBottom>תמונות מוצר</Typography>
                     
                     <Box sx={{ mb: 3 }}>
-                      <input
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        id="image-upload"
-                        multiple
-                        type="file"
-                        onChange={handleImageUpload}
-                      />
-                      <label htmlFor="image-upload">
+                      <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'flex-start' }}>
+                        <TextField
+                          fullWidth
+                          label="קישור לתמונה (URL)"
+                          placeholder="https://example.com/image.jpg"
+                          value={newImageUrl}
+                          onChange={(e) => setNewImageUrl(e.target.value)}
+                          sx={{ flex: 1 }}
+                        />
+                        <TextField
+                          label="טקסט חלופי"
+                          placeholder="תיאור התמונה"
+                          value={newImageAlt}
+                          onChange={(e) => setNewImageAlt(e.target.value)}
+                          sx={{ width: '200px' }}
+                        />
                         <Button 
-                          variant="outlined" 
-                          component="span"
+                          variant="contained" 
                           startIcon={<PhotoIcon />}
-                          sx={{ mb: 2 }}
+                          onClick={handleAddImageUrl}
+                          disabled={!newImageUrl.trim()}
+                          sx={{ minWidth: '120px' }}
                         >
-                          העלה תמונות
+                          הוסף תמונה
                         </Button>
-                      </label>
+                      </Box>
                       <Typography variant="caption" color="text.secondary" display="block">
-                        ניתן לבחור מספר תמונות בו זמנית. התמונה הראשונה תהיה התמונה הראשית.
+                        הזן קישור לתמונה מהאינטרנט. ניתן להוסיף מספר תמונות. התמונה הראשונה תהיה התמונה הראשית.
                       </Typography>
                     </Box>
 
