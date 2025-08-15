@@ -48,8 +48,8 @@ import backendProductService from '../services/backendProductService';
 interface AdminProduct {
   id?: string;
   productId: string;
-  name?: { he: string; en: string }; // Optional for display purposes
-  description?: { he: string; en: string }; // Optional for display purposes
+  name?: { he: string; en: string; es: string }; // Optional for display purposes
+  description?: { he: string; en: string; es: string }; // Optional for display purposes
   basePrice: number;
   currency: string;
   dimensions: {
@@ -58,6 +58,8 @@ interface AdminProduct {
       max: number;
       default: number;
       multiplier: number;
+      visible?: boolean;
+      editable?: boolean;
     };
   };
   options: {
@@ -130,14 +132,14 @@ const AdminProducts: React.FC = () => {
   const handleAddProduct = () => {
     const newProduct: AdminProduct = {
       productId: '',
-      name: { he: '', en: '' }, // Initialize name
-      description: { he: '', en: '' }, // Initialize description
+      name: { he: '', en: '', es: '' }, // Initialize name
+      description: { he: '', en: '', es: '' }, // Initialize description
       basePrice: 0,
       currency: 'NIS',
       dimensions: {
-        length: { min: 10, max: 300, default: 100, multiplier: 1.0 },
-        width: { min: 10, max: 300, default: 50, multiplier: 1.0 },
-        height: { min: 10, max: 300, default: 100, multiplier: 1.0 }
+        width: { min: 10, max: 300, default: 50, multiplier: 1.0, visible: true, editable: true },
+        height: { min: 10, max: 300, default: 100, multiplier: 1.0, visible: true, editable: true },
+        depth: { min: 10, max: 300, default: 30, multiplier: 1.0, visible: true, editable: true }
       },
       options: {
         lacquer: { available: true, price: 45 },
@@ -426,47 +428,67 @@ const AdminProducts: React.FC = () => {
                   <Box>
                     <Typography variant="h6" gutterBottom>פרטים בסיסיים</Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <Box sx={{ display: 'flex', gap: 2 }}>
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                         <TextField
-                          fullWidth
+                          sx={{ flex: '1 1 300px' }}
                           label="שם המוצר (עברית)"
                           value={editingProduct.name?.he || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            name: { ...(editingProduct.name || { he: '', en: '' }), he: e.target.value }
+                            name: { ...(editingProduct.name || { he: '', en: '', es: '' }), he: e.target.value }
                           })}
                         />
                         <TextField
-                          fullWidth
+                          sx={{ flex: '1 1 300px' }}
                           label="שם המוצר (אנגלית)"
                           value={editingProduct.name?.en || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            name: { ...(editingProduct.name || { he: '', en: '' }), en: e.target.value }
+                            name: { ...(editingProduct.name || { he: '', en: '', es: '' }), en: e.target.value }
+                          })}
+                        />
+                        <TextField
+                          sx={{ flex: '1 1 300px' }}
+                          label="שם המוצר (ספרדית)"
+                          value={editingProduct.name?.es || ''}
+                          onChange={(e) => setEditingProduct({
+                            ...editingProduct,
+                            name: { ...(editingProduct.name || { he: '', en: '', es: '' }), es: e.target.value }
                           })}
                         />
                       </Box>
-                      <Box sx={{ display: 'flex', gap: 2 }}>
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                         <TextField
-                          fullWidth
+                          sx={{ flex: '1 1 300px' }}
                           multiline
                           rows={3}
                           label="תיאור (עברית)"
                           value={editingProduct.description?.he || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            description: { ...(editingProduct.description || { he: '', en: '' }), he: e.target.value }
+                            description: { ...(editingProduct.description || { he: '', en: '', es: '' }), he: e.target.value }
                           })}
                         />
                         <TextField
-                          fullWidth
+                          sx={{ flex: '1 1 300px' }}
                           multiline
                           rows={3}
                           label="תיאור (אנגלית)"
                           value={editingProduct.description?.en || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            description: { ...(editingProduct.description || { he: '', en: '' }), en: e.target.value }
+                            description: { ...(editingProduct.description || { he: '', en: '', es: '' }), en: e.target.value }
+                          })}
+                        />
+                        <TextField
+                          sx={{ flex: '1 1 300px' }}
+                          multiline
+                          rows={3}
+                          label="תיאור (ספרדית)"
+                          value={editingProduct.description?.es || ''}
+                          onChange={(e) => setEditingProduct({
+                            ...editingProduct,
+                            description: { ...(editingProduct.description || { he: '', en: '', es: '' }), es: e.target.value }
                           })}
                         />
                       </Box>
@@ -520,7 +542,9 @@ const AdminProducts: React.FC = () => {
                           <Typography variant="subtitle1" gutterBottom>
                             {dimension === 'width' ? 'רוחב' : dimension === 'height' ? 'גובה' : 'עומק'} (ס"מ)
                           </Typography>
-                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                          
+                          {/* Dimension Values */}
+                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', mb: 2 }}>
                             <TextField
                               size="small"
                               type="number"
@@ -552,6 +576,32 @@ const AdminProducts: React.FC = () => {
                               sx={{ flex: '1 1 120px' }}
                               value={editingProduct.dimensions?.[dimension]?.multiplier || 0}
                               onChange={(e) => updateDimension(dimension, 'multiplier', Number(e.target.value))}
+                            />
+                          </Box>
+                          
+                          {/* Dimension Control Settings */}
+                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={editingProduct.dimensions?.[dimension]?.visible !== false}
+                                  onChange={(e) => updateDimension(dimension, 'visible', e.target.checked)}
+                                  size="small"
+                                />
+                              }
+                              label="נראה ללקוח"
+                              sx={{ minWidth: '120px' }}
+                            />
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={editingProduct.dimensions?.[dimension]?.editable !== false}
+                                  onChange={(e) => updateDimension(dimension, 'editable', e.target.checked)}
+                                  size="small"
+                                />
+                              }
+                              label="ניתן לעריכה"
+                              sx={{ minWidth: '120px' }}
                             />
                           </Box>
                         </CardContent>
