@@ -574,14 +574,67 @@ router.get('/products', async (req, res) => {
 // @access  Public
 router.post('/products', async (req, res) => {
   try {
-    const productData = req.body;
+    const rawData = req.body;
+    
+    // Remove MongoDB internal fields and sanitize data for new product creation
+    const {
+      _id,
+      __v,
+      createdAt,
+      updatedAt,
+      ...cleanData
+    } = rawData;
+    
+    // Clean nested objects (remove _id from images array)
+    if (cleanData.images && Array.isArray(cleanData.images)) {
+      cleanData.images = cleanData.images.map(({ _id, ...image }) => image);
+    }
+    
+    // Clean nested objects in colorOptions if present
+    if (cleanData.colorOptions && cleanData.colorOptions.options && Array.isArray(cleanData.colorOptions.options)) {
+      cleanData.colorOptions.options = cleanData.colorOptions.options.map(({ _id, ...option }) => option);
+    }
+    
+    // Ensure required fields are present
+    if (!cleanData.basePrice) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        error: 'basePrice is required'
+      });
+    }
+    
+    if (!cleanData.category) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error', 
+        error: 'category is required'
+      });
+    }
     
     // Generate productId if not provided
-    if (!productData.productId) {
-      productData.productId = `product-${Date.now()}`;
+    if (!cleanData.productId) {
+      cleanData.productId = `product-${Date.now()}`;
     }
 
-    const product = new Product(productData);
+    // Recursively remove all _id fields from the object
+    function removeAllIds(obj) {
+      if (Array.isArray(obj)) {
+        return obj.map(removeAllIds);
+      } else if (obj !== null && typeof obj === 'object') {
+        const { _id, ...rest } = obj;
+        const cleaned = {};
+        for (const [key, value] of Object.entries(rest)) {
+          cleaned[key] = removeAllIds(value);
+        }
+        return cleaned;
+      }
+      return obj;
+    }
+    
+    const fullyCleanData = removeAllIds(cleanData);
+    console.log('Creating product with fully clean data:', JSON.stringify(fullyCleanData, null, 2));
+    const product = new Product(fullyCleanData);
     await product.save();
 
     res.status(201).json({
