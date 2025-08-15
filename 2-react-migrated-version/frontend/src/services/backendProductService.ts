@@ -261,16 +261,82 @@ class BackendProductService {
     }
   }
 
-  // Calculate price based on customizations (frontend calculation for now)
+  // Calculate price based on customizations (frontend calculation)
   calculatePrice(productId: string, customizations: { 
     width?: number; 
     height?: number; 
     depth?: number; 
+    length?: number; // Support old format for stairs
+    steps?: number;  // Support steps for stairs
     color?: string 
   }): number {
-    // For now, use frontend calculation
-    // TODO: Could be moved to backend API call in the future
-    return 0; // Placeholder - will need to implement based on backend logic
+    try {
+      // Find the product data from the last fetched products
+      // This is a simplified calculation - in production, this should call backend API
+      
+      // Base prices for known products
+      const productPrices: { [key: string]: { basePrice: number, dimensions: any } } = {
+        'amsterdam-bookshelf': { 
+          basePrice: 199, 
+          dimensions: {
+            width: { min: 60, max: 120, default: 80, multiplier: 0.3 },
+            height: { min: 100, max: 250, default: 180, multiplier: 0.5 },
+            depth: { min: 25, max: 40, default: 30, multiplier: 0.4 }
+          }
+        },
+        'venice-bookshelf': {
+          basePrice: 249,
+          dimensions: {
+            width: { min: 70, max: 140, default: 90, multiplier: 0.35 },
+            height: { min: 120, max: 300, default: 200, multiplier: 0.4 }
+          }
+        },
+        'stairs': {
+          basePrice: 299,
+          dimensions: {
+            length: { min: 150, max: 400, default: 250, multiplier: 0.8 },
+            width: { min: 60, max: 120, default: 80, multiplier: 0.5 },
+            height: { min: 50, max: 150, default: 100, multiplier: 0.6 },
+            steps: { min: 3, max: 12, default: 6, multiplier: 15 }
+          }
+        }
+      };
+
+      const productData = productPrices[productId];
+      if (!productData) {
+        console.warn(`No price data for product: ${productId}`);
+        return 0;
+      }
+
+      let totalPrice = productData.basePrice;
+      let sizeAdjustment = 0;
+
+      // Calculate size adjustments
+      if (productData.dimensions && customizations) {
+        Object.keys(customizations).forEach(key => {
+          const dimensionValue = (customizations as any)[key];
+          if (productData.dimensions[key] && typeof dimensionValue === 'number') {
+            const difference = dimensionValue - productData.dimensions[key].default;
+            sizeAdjustment += difference * productData.dimensions[key].multiplier;
+          }
+        });
+      }
+
+      totalPrice += sizeAdjustment;
+
+      // Add color cost (40% increase for non-natural colors)
+      let colorCost = 0;
+      if (customizations.color && customizations.color !== 'ללא צבע' && customizations.color !== 'natural') {
+        colorCost = Math.round(totalPrice * 0.4);
+      }
+
+      totalPrice += colorCost;
+
+      return Math.max(Math.round(totalPrice * 100) / 100, 0);
+    } catch (error) {
+      console.error('Price calculation error:', error);
+      return 0;
+    }
   }
 
   // Admin methods - manage products via backend API

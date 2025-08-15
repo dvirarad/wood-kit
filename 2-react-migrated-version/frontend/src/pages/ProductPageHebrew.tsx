@@ -88,6 +88,8 @@ const ProductPageHebrew: React.FC = () => {
           length: dimensions.length,
           width: dimensions.width,
           height: dimensions.height,
+          depth: dimensions.depth,
+          steps: dimensions.steps,
           color: selectedColor
         };
         const totalPrice = backendProductService.calculatePrice(product.productId, customizations);
