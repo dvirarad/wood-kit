@@ -676,11 +676,56 @@ router.post('/products', async (req, res) => {
 router.put('/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    let rawData = req.body;
+    console.log('UPDATE - Received Content-Type:', req.get('Content-Type'));
+    
+    // Handle text/plain content type by parsing JSON manually
+    if (req.get('Content-Type')?.includes('text/plain') && typeof rawData === 'string') {
+      try {
+        rawData = JSON.parse(rawData);
+        console.log('UPDATE - Parsed JSON from text/plain:', JSON.stringify(rawData, null, 2));
+      } catch (e) {
+        console.log('UPDATE - Failed to parse JSON from text/plain:', e.message);
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid JSON format',
+          error: 'Request body must be valid JSON'
+        });
+      }
+    } else {
+      console.log('UPDATE - Raw request body:', JSON.stringify(rawData, null, 2));
+    }
+    
+    // Remove MongoDB internal fields and sanitize data for product update
+    const {
+      _id,
+      __v,
+      createdAt,
+      updatedAt,
+      ...cleanData
+    } = rawData;
+    
+    // Recursively remove all _id fields from the object
+    function removeAllIds(obj) {
+      if (Array.isArray(obj)) {
+        return obj.map(removeAllIds);
+      } else if (obj !== null && typeof obj === 'object') {
+        const { _id, ...rest } = obj;
+        const cleaned = {};
+        for (const [key, value] of Object.entries(rest)) {
+          cleaned[key] = removeAllIds(value);
+        }
+        return cleaned;
+      }
+      return obj;
+    }
+    
+    const fullyCleanData = removeAllIds(cleanData);
+    console.log('UPDATE - Clean data for update:', JSON.stringify(fullyCleanData, null, 2));
 
     const product = await Product.findByIdAndUpdate(
       id,
-      updateData,
+      fullyCleanData,
       { new: true, runValidators: true }
     );
 
