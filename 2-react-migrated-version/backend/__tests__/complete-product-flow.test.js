@@ -1,6 +1,6 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const app = require('../server');
+const app = require('../test-app');
 const Product = require('../models/Product');
 
 describe('Complete Product Flow E2E Tests', () => {

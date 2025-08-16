@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../server');
+const app = require('../test-app');
 const Product = require('../models/Product');
 
 describe('Product Dimensions API Validation', () => {
@@ -7,8 +7,8 @@ describe('Product Dimensions API Validation', () => {
     test('should accept products with correct dimensions (width, height, depth)', async () => {
       const validProduct = {
         productId: 'test-dimensions-product',
-        name: { he: 'מוצר בדיקה', en: 'Test Product' },
-        description: { he: 'תיאור', en: 'Description' },
+        name: { he: 'מוצר בדיקה', en: 'Test Product', es: 'Producto de Prueba' },
+        description: { he: 'תיאור', en: 'Description', es: 'Descripción' },
         basePrice: 199,
         currency: 'NIS',
         dimensions: {
@@ -45,27 +45,38 @@ describe('Product Dimensions API Validation', () => {
       }
     });
 
-    test('should reject products with old dimension structure (length)', async () => {
-      const invalidProduct = {
-        productId: 'test-invalid-dimensions',
-        name: { he: 'מוצר לא תקין', en: 'Invalid Product' },
-        description: { he: 'תיאור', en: 'Description' },
+    test('should accept products with length dimension (model supports it)', async () => {
+      const productWithLength = {
+        productId: 'test-with-length-dimensions',
+        name: { he: 'מוצר עם אורך', en: 'Product with Length', es: 'Producto con Longitud' },
+        description: { he: 'תיאור', en: 'Description', es: 'Descripción' },
         basePrice: 199,
         dimensions: {
-          length: { min: 60, max: 120, default: 80, multiplier: 0.3 }, // Old structure
+          length: { min: 60, max: 120, default: 80, multiplier: 0.3 },
           width: { min: 60, max: 120, default: 80, multiplier: 0.3 },
           height: { min: 100, max: 250, default: 180, multiplier: 0.5 }
         },
-        category: 'bookshelf'
+        category: 'bookshelf',
+        tags: ['test'],
+        images: [{ url: 'test.jpg', alt: 'Test', isPrimary: true }],
+        isActive: true,
+        inventory: { inStock: true, stockLevel: 50, lowStockThreshold: 5 },
+        ratings: { average: 0, count: 0 }
       };
 
       const response = await request(app)
         .post('/api/v1/admin/products')
-        .send(invalidProduct);
+        .send(productWithLength);
 
-      // Should either reject or ignore the 'length' dimension
-      if (response.status === 201) {
-        expect(response.body.data.dimensions).not.toHaveProperty('length');
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.dimensions).toHaveProperty('length');
+      expect(response.body.data.dimensions).toHaveProperty('width');
+      expect(response.body.data.dimensions).toHaveProperty('height');
+
+      // Clean up
+      if (response.body.data._id) {
+        await Product.deleteOne({ _id: response.body.data._id });
       }
     });
   });
@@ -77,15 +88,15 @@ describe('Product Dimensions API Validation', () => {
       // Create a test product
       const testProduct = new Product({
         productId: 'dimensions-format-test',
-        name: { he: 'בדיקת פורמט', en: 'Format Test' },
-        description: { he: 'תיאור', en: 'Description' },
+        name: { he: 'בדיקת פורמט', en: 'Format Test', es: 'Prueba de Formato' },
+        description: { he: 'תיאור', en: 'Description', es: 'Descripción' },
         basePrice: 199,
         dimensions: {
           width: { min: 60, max: 120, default: 80, multiplier: 0.3 },
           height: { min: 100, max: 250, default: 180, multiplier: 0.5 },
           depth: { min: 25, max: 40, default: 30, multiplier: 0.4 }
         },
-        category: 'test',
+        category: 'bookshelf',
         isActive: true,
         inventory: { inStock: true, stockLevel: 50, lowStockThreshold: 5 }
       });
@@ -145,15 +156,15 @@ describe('Product Dimensions API Validation', () => {
     beforeAll(async () => {
       const testProduct = new Product({
         productId: 'price-calc-dimensions-test',
-        name: { he: 'בדיקת מחשבון מחיר', en: 'Price Calculator Test' },
-        description: { he: 'תיאור', en: 'Description' },
+        name: { he: 'בדיקת מחשבון מחיר', en: 'Price Calculator Test', es: 'Prueba de Calculadora de Precios' },
+        description: { he: 'תיאור', en: 'Description', es: 'Descripción' },
         basePrice: 200,
         dimensions: {
           width: { min: 50, max: 100, default: 75, multiplier: 0.5 },
           height: { min: 80, max: 200, default: 150, multiplier: 0.3 },
           depth: { min: 20, max: 50, default: 35, multiplier: 0.2 }
         },
-        category: 'test',
+        category: 'bookshelf',
         isActive: true,
         inventory: { inStock: true, stockLevel: 50, lowStockThreshold: 5 }
       });
