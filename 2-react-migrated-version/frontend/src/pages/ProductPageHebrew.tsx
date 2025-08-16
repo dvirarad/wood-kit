@@ -15,9 +15,25 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Snackbar
+  Snackbar,
+  ImageList,
+  ImageListItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Divider,
+  Grid,
+  Card,
+  CardContent,
+  CardMedia,
+  Stack
 } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import { ArrowBack, Build, AutoAwesome, CheckCircle, Timer, EmojiObjects } from '@mui/icons-material';
 import backendProductService, { ClientProduct } from '../services/backendProductService';
 import { useCart, CartItem } from '../context/CartContext';
 import Navigation from '../components/Navigation';
@@ -38,6 +54,18 @@ const ProductPageHebrew: React.FC = () => {
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
   const [showNotification, setShowNotification] = useState<boolean>(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+  
+  // Order form state
+  const [orderDialogOpen, setOrderDialogOpen] = useState<boolean>(false);
+  const [orderForm, setOrderForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    deliveryMethod: 'pickup' // 'pickup' or 'shipping'
+  });
+  const [orderSubmitting, setOrderSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     if (!productId) {
@@ -109,24 +137,76 @@ const ProductPageHebrew: React.FC = () => {
     setDimensions(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleAddToCart = () => {
+  const handleOrderClick = () => {
+    setOrderDialogOpen(true);
+  };
+
+  const handleOrderSubmit = async () => {
     if (!product) return;
+    
+    setOrderSubmitting(true);
+    try {
+      // Calculate final price including delivery
+      const deliveryFee = orderForm.deliveryMethod === 'shipping' ? 400 : 0;
+      const finalPrice = calculatedPrice + deliveryFee;
+      
+      const orderData = {
+        // Product details
+        productId: product.productId,
+        productName: product.name.he,
+        basePrice: product.basePrice,
+        configuration: {
+          dimensions,
+          color: selectedColor
+        },
+        calculatedPrice: calculatedPrice,
+        deliveryFee: deliveryFee,
+        finalPrice: finalPrice,
+        
+        // Customer details
+        customer: orderForm,
+        
+        // Order metadata
+        orderDate: new Date().toISOString(),
+        language: 'he'
+      };
+      
+      // Send to backend API
+      const response = await fetch('/api/v1/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData)
+      });
 
-    const cartItem: CartItem = {
-      productId: product.productId,
-      name: product.name.he,
-      basePrice: product.basePrice,
-      configuration: {
-        dimensions,
-        color: selectedColor,
-        options: {}
-      },
-      calculatedPrice,
-      quantity
-    };
+      const result = await response.json();
 
-    addItem(cartItem);
-    setShowNotification(true);
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to submit order');
+      }
+
+      console.log('Order submitted successfully:', result.data);
+      
+      // Close dialog and show success
+      setOrderDialogOpen(false);
+      setShowNotification(true);
+      
+      // Reset form
+      setOrderForm({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        deliveryMethod: 'pickup'
+      });
+      
+    } catch (error) {
+      console.error('Order submission failed:', error);
+      alert('שגיאה בשליחת ההזמנה. אנא נסה שוב.');
+    } finally {
+      setOrderSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -170,30 +250,78 @@ const ProductPageHebrew: React.FC = () => {
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           <Box sx={{ flex: '1 1 400px', minWidth: '400px' }}>
+            {/* Main Image Display */}
             <Box
               component="img"
-              src={product.images.find(img => img.isPrimary)?.url || 'https://via.placeholder.com/400x300?text=No+Image'}
+              src={product.images[selectedImageIndex]?.url || 'https://via.placeholder.com/400x300?text=No+Image'}
               alt={product.name.he}
               sx={{
                 width: '100%',
                 height: 400,
                 objectFit: 'cover',
                 borderRadius: 1,
-                boxShadow: 2
+                boxShadow: 2,
+                mb: 2
               }}
             />
+            
+            {/* Image Gallery Thumbnails */}
+            {product.images.length > 1 && (
+              <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 1 }}>
+                {product.images.map((image, index) => (
+                  <Box
+                    key={index}
+                    component="img"
+                    src={image.url}
+                    alt={`${product.name.he} ${index + 1}`}
+                    onClick={() => setSelectedImageIndex(index)}
+                    sx={{
+                      width: 80,
+                      height: 60,
+                      objectFit: 'cover',
+                      borderRadius: 1,
+                      cursor: 'pointer',
+                      border: selectedImageIndex === index ? '3px solid' : '1px solid',
+                      borderColor: selectedImageIndex === index ? 'primary.main' : 'grey.300',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        transform: 'scale(1.05)'
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
           </Box>
 
           <Box sx={{ flex: '1 1 400px', minWidth: '400px' }}>
-            <Typography variant="h3" component="h1" gutterBottom>
-              {product.name.he}
-            </Typography>
+            <Box sx={{ mb: 3 }}>
+              <Chip 
+                label="🛠️ קיט DIY"
+                color="primary" 
+                variant="filled"
+                sx={{ mb: 2, fontWeight: 'bold' }}
+              />
+              <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
+                {product.name.he}
+              </Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ fontStyle: 'italic', mb: 2 }}>
+                רהיט מותאם אישית לבנייה עצמית
+              </Typography>
+            </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Rating value={product.ratings.average} readOnly size="large" />
               <Typography variant="body1" sx={{ mr: 1 }}>
                 ({product.ratings.count} ביקורות)
               </Typography>
+              <Chip 
+                label="משלוח מהיר" 
+                size="small" 
+                color="success" 
+                sx={{ mr: 1 }}
+              />
             </Box>
 
             <Typography variant="body1" paragraph>
@@ -222,7 +350,7 @@ const ProductPageHebrew: React.FC = () => {
                   return (
                     <Box key={key} sx={{ mb: 3 }}>
                       <Typography variant="subtitle1" gutterBottom>
-                        {key === 'height' ? 'גובה' : key === 'width' ? 'רוחב' : key === 'length' ? 'אורך' : key} ({config.min}-{config.max} ס"מ)
+                        {key === 'height' ? 'גובה' : key === 'width' ? 'רוחב' : key === 'length' ? 'אורך' : key === 'depth' ? 'עומק' : key} ({config.min}-{config.max} ס"מ)
                       </Typography>
                       <Slider
                         value={dimensions[key] || config.default}
@@ -270,6 +398,85 @@ const ProductPageHebrew: React.FC = () => {
               </Paper>
             )}
 
+            {/* DIY Experience Showcase */}
+            <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Build sx={{ fontSize: 28, color: 'primary.main', mr: 1 }} />
+                <Typography variant="h6" fontWeight="bold">
+                  קיט DIY קל להרכבה
+                </Typography>
+              </Box>
+              
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ height: '100%', boxShadow: 3 }}>
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image="/images/diy/assembly-process.png"
+                      alt="תהליך הרכבה קל ומהנה"
+                      sx={{ objectFit: 'cover' }}
+                    />
+                    <CardContent>
+                      <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+                        <Timer sx={{ color: 'success.main', fontSize: 20 }} />
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          הרכבה ב-30-60 דקות
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary">
+                        הדרכה ברורה בסגנון IKEA עם איורים מפורטים וכלים נדרשים
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ height: '100%', boxShadow: 3 }}>
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image="/images/diy/finished-product.png"
+                      alt="התוצאה הסופית - רהיט מעוצב ואיכותי"
+                      sx={{ objectFit: 'cover' }}
+                    />
+                    <CardContent>
+                      <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+                        <AutoAwesome sx={{ color: 'warning.main', fontSize: 20 }} />
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          תוצאה מקצועית מבית
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary">
+                        חווה את הסיפוק של יצירה עצמית והשג רהיט איכותי ומותאם אישית
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+              
+              <Box sx={{ mt: 3, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
+                <Chip 
+                  icon={<CheckCircle />} 
+                  label="כל החומרים כלולים" 
+                  color="success" 
+                  variant="filled"
+                />
+                <Chip 
+                  icon={<EmojiObjects />} 
+                  label="הוראות הרכבה ברורות" 
+                  color="primary" 
+                  variant="filled"
+                />
+                <Chip 
+                  icon={<Build />} 
+                  label="כלים בסיסיים בלבד" 
+                  color="info" 
+                  variant="filled"
+                />
+              </Box>
+            </Paper>
+
             <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, mb: 3 }}>
               <Typography variant="h5" color="primary">
                 מחיר: ₪{calculatingPrice ? '...' : calculatedPrice.toLocaleString()}
@@ -282,22 +489,127 @@ const ProductPageHebrew: React.FC = () => {
             <Button
               variant="contained"
               size="large"
-              onClick={handleAddToCart}
+              onClick={handleOrderClick}
               disabled={!product.inventory.inStock || calculatingPrice}
               fullWidth
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                py: 2,
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1976D2 30%, #1A9CD8 90%)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 10px 2px rgba(33, 203, 243, .4)',
+                },
+                transition: 'all 0.3s ease'
+              }}
             >
-              {product.inventory.inStock ? 'הוסף לעגלה' : 'אזל המלאי'}
+              {product.inventory.inStock ? '🛠️ המשך להזמנה - בנה את הרהיט שלך!' : 'אזל המלאי'}
             </Button>
           </Box>
         </Box>
       </Container>
+
+      {/* Full-width DIY Experience Section */}
+      <Box sx={{ bgcolor: '#f8f9fa', py: 6, mt: 4 }}>
+        <Container maxWidth="lg">
+          <Typography variant="h4" align="center" fontWeight="bold" mb={2} sx={{ direction: 'rtl' }}>
+            למה לבחור ברהיטי DIY שלנו?
+          </Typography>
+          <Typography variant="h6" align="center" color="text.secondary" mb={4} sx={{ direction: 'rtl' }}>
+            חוויית בנייה מהנה עם תוצאות מקצועיות
+          </Typography>
+          
+          <Grid container spacing={4} sx={{ direction: 'rtl' }}>
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 3, textAlign: 'center', height: '100%', borderRadius: 3 }}>
+                <Box sx={{ 
+                  bgcolor: 'primary.main', 
+                  borderRadius: '50%', 
+                  width: 80, 
+                  height: 80, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 2
+                }}>
+                  <EmojiObjects sx={{ fontSize: 40, color: 'white' }} />
+                </Box>
+                <Typography variant="h6" fontWeight="bold" mb={2}>
+                  הוראות IKEA-style
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  איורים ברורים, הוראות פשוטות ורשימת כלים. בדיוק כמו שאתם אוהבים מ-IKEA, אבל עם התאמה אישית מלאה לבית שלכם.
+                </Typography>
+              </Paper>
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 3, textAlign: 'center', height: '100%', borderRadius: 3 }}>
+                <Box sx={{ 
+                  bgcolor: 'success.main', 
+                  borderRadius: '50%', 
+                  width: 80, 
+                  height: 80, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 2
+                }}>
+                  <CheckCircle sx={{ fontSize: 40, color: 'white' }} />
+                </Box>
+                <Typography variant="h6" fontWeight="bold" mb={2}>
+                  איכות מובטחת
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  עץ איכותי, חומרי חיזוק מקצועיים וחלקי מתכת עמידים. כל קיט עובר בדיקת איכות לפני המשלוח.
+                </Typography>
+              </Paper>
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 3, textAlign: 'center', height: '100%', borderRadius: 3 }}>
+                <Box sx={{ 
+                  bgcolor: 'warning.main', 
+                  borderRadius: '50%', 
+                  width: 80, 
+                  height: 80, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 2
+                }}>
+                  <AutoAwesome sx={{ fontSize: 40, color: 'white' }} />
+                </Box>
+                <Typography variant="h6" fontWeight="bold" mb={2}>
+                  סיפוק אישי
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  אין כמו הרגש של "עשיתי את זה בעצמי!" - תיהנו מתהליך הבנייה ותקבלו רהיט שיש לו סיפור.
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+          
+          <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary" sx={{ direction: 'rtl' }}>
+              <strong>זמן הרכבה משוער:</strong> 30-60 דקות | <strong>כלים נדרשים:</strong> מברג, פטיש קטן | <strong>מתאים לכל הגילאים:</strong> פרויקט משפחתי מהנה
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
       
       <Snackbar
         open={showNotification}
         autoHideDuration={3000}
         onClose={() => setShowNotification(false)}
-        message="המוצר נוסף לעגלה בהצלחה!"
+        message="ההזמנה נשלחה בהצלחה! נחזור אליך בהקדם."
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         sx={{
           '& .MuiSnackbarContent-root': {
@@ -306,6 +618,156 @@ const ProductPageHebrew: React.FC = () => {
           }
         }}
       />
+
+      {/* Order Form Dialog */}
+      <Dialog 
+        open={orderDialogOpen} 
+        onClose={() => setOrderDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{ direction: 'rtl' }}
+      >
+        <DialogTitle>
+          <Typography variant="h5" component="div">
+            המשך להזמנה
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {product?.name.he} - ₪{calculatedPrice.toLocaleString()}
+          </Typography>
+        </DialogTitle>
+        
+        <DialogContent>
+          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* Customer Information */}
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                פרטים אישיים
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <TextField
+                  required
+                  fullWidth
+                  label="שם מלא"
+                  value={orderForm.name}
+                  onChange={(e) => setOrderForm({...orderForm, name: e.target.value})}
+                  dir="rtl"
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="כתובת אימייל"
+                  type="email"
+                  value={orderForm.email}
+                  onChange={(e) => setOrderForm({...orderForm, email: e.target.value})}
+                  dir="ltr"
+                />
+                <TextField
+                  required
+                  fullWidth
+                  label="מספר טלפון"
+                  value={orderForm.phone}
+                  onChange={(e) => setOrderForm({...orderForm, phone: e.target.value})}
+                  dir="ltr"
+                />
+                <TextField
+                  required
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="כתובת מלאה"
+                  value={orderForm.address}
+                  onChange={(e) => setOrderForm({...orderForm, address: e.target.value})}
+                  dir="rtl"
+                />
+              </Box>
+            </Box>
+
+            <Divider />
+
+            {/* Delivery Method */}
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                שיטת משלוח
+              </Typography>
+              <FormControl component="fieldset">
+                <RadioGroup
+                  value={orderForm.deliveryMethod}
+                  onChange={(e) => setOrderForm({...orderForm, deliveryMethod: e.target.value})}
+                >
+                  <FormControlLabel
+                    value="pickup"
+                    control={<Radio />}
+                    label={
+                      <Box>
+                        <Typography variant="body1">איסוף עצמי</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          ללא עלות נוספת
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                  <FormControlLabel
+                    value="shipping"
+                    control={<Radio />}
+                    label={
+                      <Box>
+                        <Typography variant="body1">משלוח עד הבית</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          ₪400 (משלוח בלבד)
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </RadioGroup>
+              </FormControl>
+            </Box>
+
+            <Divider />
+
+            {/* Price Summary */}
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                סיכום מחיר
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography>מחיר המוצר:</Typography>
+                <Typography>₪{calculatedPrice.toLocaleString()}</Typography>
+              </Box>
+              {orderForm.deliveryMethod === 'shipping' && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography>משלוח:</Typography>
+                  <Typography>₪400</Typography>
+                </Box>
+              )}
+              <Divider sx={{ my: 1 }} />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                <Typography variant="h6">סה"כ לתשלום:</Typography>
+                <Typography variant="h6" color="primary">
+                  ₪{(calculatedPrice + (orderForm.deliveryMethod === 'shipping' ? 400 : 0)).toLocaleString()}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 3, gap: 2 }}>
+          <Button 
+            onClick={() => setOrderDialogOpen(false)}
+            variant="outlined"
+            fullWidth
+          >
+            ביטול
+          </Button>
+          <Button 
+            onClick={handleOrderSubmit}
+            variant="contained"
+            fullWidth
+            disabled={orderSubmitting || !orderForm.name || !orderForm.email || !orderForm.phone || !orderForm.address}
+          >
+            {orderSubmitting ? 'שולח...' : 'שלח הזמנה'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
