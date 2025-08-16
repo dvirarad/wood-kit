@@ -1,358 +1,251 @@
 const express = require('express');
 const router = express.Router();
-const Order = require('../models/Order');
-const Product = require('../models/Product');
-const { adminOnly, optionalAuth } = require('../middleware/auth');
-const validate = require('../middleware/validate');
-const { orderValidation } = require('../validation/orderValidation');
-const emailService = require('../services/emailService');
+const sgMail = require('@sendgrid/mail');
 
-// @desc    Create new order
+// Initialize SendGrid
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+// @desc    Submit new order
 // @route   POST /api/v1/orders
 // @access  Public
-router.post('/', validate(orderValidation.create), async (req, res) => {
-  try {
-    const { customer, items, notes, language = 'en' } = req.body;
-
-    // Validate and process items
-    const processedItems = [];
-    let subtotal = 0;
-
-    for (const item of items) {
-      // Find product
-      const product = await Product.findOne({ 
-        productId: item.productId,
-        isActive: true 
-      });
-
-      if (!product) {
-        return res.status(400).json({
-          success: false,
-          message: `Product not found: ${item.productId}`
-        });
-      }
-
-      // Check inventory
-      if (!product.inventory.inStock) {
-        return res.status(400).json({
-          success: false,
-          message: `Product out of stock: ${item.productId}`
-        });
-      }
-
-      // Calculate pricing
-      const pricing = Product.calculatePrice(
-        product.basePrice,
-        product.dimensions,
-        item.configuration.dimensions,
-        item.configuration.options,
-        product.colorOptions,
-        item.configuration.color
-      );
-
-      const processedItem = {
-        product: product._id,
-        productId: item.productId,
-        name: typeof product.name === 'string' ? product.name : (product.name[language] || product.name.en),
-        configuration: item.configuration,
-        pricing: {
-          basePrice: pricing.basePrice,
-          sizeAdjustment: pricing.sizeAdjustment,
-          colorCost: pricing.colorCost || 0,
-          optionsCost: pricing.optionsCost || 0,
-          unitPrice: pricing.totalPrice
-        },
-        quantity: item.quantity || 1,
-        totalPrice: pricing.totalPrice * (item.quantity || 1)
-      };
-
-      processedItems.push(processedItem);
-      subtotal += processedItem.totalPrice;
-    }
-
-    // Create order
-    const orderData = {
-      customer,
-      items: processedItems,
-      pricing: {
-        subtotal,
-        taxRate: 0.17, // 17% VAT in Israel
-        tax: subtotal * 0.17,
-        shipping: 0,
-        discount: 0,
-        total: subtotal * 1.17
-      },
-      currency: 'NIS',
-      notes: {
-        customer: notes || ''
-      },
-      metadata: {
-        source: 'website',
-        userAgent: req.get('User-Agent'),
-        ipAddress: req.ip,
-        language
-      }
-    };
-
-    const order = new Order(orderData);
-    await order.save();
-
-    // Send confirmation email
-    try {
-      await emailService.sendOrderConfirmation(order, language);
-    } catch (emailError) {
-      console.error('Failed to send confirmation email:', emailError);
-      // Don't fail the order creation if email fails
-    }
-
-    res.status(201).json({
-      success: true,
-      message: 'Order created successfully',
-      data: {
-        orderId: order.orderId,
-        id: order._id,
-        customer: order.customer,
-        items: order.items,
-        pricing: order.pricing,
-        currency: order.currency,
-        status: order.status,
-        createdAt: order.createdAt,
-        estimatedDelivery: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 14 days
-      }
-    });
-  } catch (error) {
-    console.error('Error creating order:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error creating order',
-      error: error.message
-    });
-  }
-});
-
-// @desc    Get order by ID
-// @route   GET /api/v1/orders/:id
-// @access  Public (with order ID) / Private (admin)
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { email } = req.query; // Customer email for verification
-
-    // Find order by orderId or MongoDB _id
-    const query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { orderId: id };
-    
-    const order = await Order.findOne(query)
-      .populate('items.product', 'name images')
-      .lean();
-
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
-
-    // If not admin, verify customer email
-    if (email && order.customer.email.toLowerCase() !== email.toLowerCase()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Invalid email verification.'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: order
-    });
-  } catch (error) {
-    console.error('Error fetching order:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching order',
-      error: error.message
-    });
-  }
-});
-
-// @desc    Get orders (Admin only)
-// @route   GET /api/v1/orders
-// @access  Private/Admin
-router.get('/', adminOnly, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const {
-      status,
+      productId,
+      productName,
+      basePrice,
+      configuration,
+      calculatedPrice,
+      deliveryFee,
+      finalPrice,
       customer,
-      page = 1,
-      limit = 20,
-      sort = '-createdAt'
-    } = req.query;
+      orderDate,
+      language
+    } = req.body;
 
-    // Build query
-    const query = {};
-    if (status) query.status = status;
-    if (customer) {
-      query.$or = [
-        { 'customer.name': { $regex: customer, $options: 'i' } },
-        { 'customer.email': { $regex: customer, $options: 'i' } }
-      ];
-    }
-
-    // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    // Get orders
-    const orders = await Order.find(query)
-      .sort(sort)
-      .skip(skip)
-      .limit(parseInt(limit))
-      .populate('items.product', 'name productId')
-      .lean();
-
-    // Get total count
-    const totalOrders = await Order.countDocuments(query);
-    const totalPages = Math.ceil(totalOrders / parseInt(limit));
-
-    // Get summary data
-    const orderSummaries = orders.map(order => order.getSummary ? order.getSummary() : {
-      id: order._id,
-      orderId: order.orderId,
-      customerName: order.customer.name,
-      customerEmail: order.customer.email,
-      itemsCount: order.items.reduce((count, item) => count + item.quantity, 0),
-      total: order.pricing.total,
-      currency: order.currency,
-      status: order.status,
-      paymentStatus: order.paymentStatus,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt
-    });
-
-    res.json({
-      success: true,
-      data: orderSummaries,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages,
-        totalOrders,
-        hasNextPage: parseInt(page) < totalPages,
-        hasPrevPage: parseInt(page) > 1
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching orders',
-      error: error.message
-    });
-  }
-});
-
-// @desc    Update order status (Admin only)
-// @route   PUT /api/v1/orders/:id/status
-// @access  Private/Admin
-router.put('/:id/status', adminOnly, validate(orderValidation.updateStatus), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status, note } = req.body;
-
-    // Find order
-    const query = id.match(/^[0-9a-fA-F]{24}$/) ? { _id: id } : { orderId: id };
-    const order = await Order.findOne(query);
-
-    if (!order) {
-      return res.status(404).json({
+    // Validate required fields
+    if (!productId || !productName || !customer || !customer.name || !customer.email || !customer.phone || !customer.address) {
+      return res.status(400).json({
         success: false,
-        message: 'Order not found'
+        message: 'Missing required order information'
       });
     }
 
-    // Update status
-    order.status = status;
-    if (note) {
-      order.notes.admin = note;
-    }
+    // Generate order ID
+    const orderId = `WK-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
-    await order.save();
+    // Create email templates
+    const adminEmailHtml = `
+      <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+          🪵 הזמנה חדשה - Wood Kits
+        </h2>
+        
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #e74c3c; margin-top: 0;">מספר הזמנה: ${orderId}</h3>
+          <p><strong>תאריך הזמנה:</strong> ${new Date(orderDate).toLocaleString('he-IL')}</p>
+        </div>
 
-    // Send status update email
+        <div style="background-color: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #2c3e50;">פרטי המוצר</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>שם המוצר:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${productName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>קוד מוצר:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${productId}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>מחיר בסיס:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">₪${basePrice.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>מחיר לאחר התאמות:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">₪${calculatedPrice.toLocaleString()}</td>
+            </tr>
+            ${deliveryFee > 0 ? `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>עלות משלוח:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">₪${deliveryFee.toLocaleString()}</td>
+            </tr>` : ''}
+            <tr style="background-color: #f8f9fa;">
+              <td style="padding: 8px; font-weight: bold; font-size: 18px;"><strong>סה"כ:</strong></td>
+              <td style="padding: 8px; font-weight: bold; font-size: 18px; color: #e74c3c;">₪${finalPrice.toLocaleString()}</td>
+            </tr>
+          </table>
+        </div>
+
+        ${configuration && configuration.dimensions ? `
+        <div style="background-color: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #2c3e50;">מידות מותאמות</h3>
+          <ul style="list-style: none; padding: 0;">
+            ${Object.entries(configuration.dimensions).map(([key, value]) => 
+              `<li style="padding: 5px 0; border-bottom: 1px solid #eee;">
+                <strong>${key === 'width' ? 'רוחב' : key === 'height' ? 'גובה' : key === 'depth' ? 'עומק' : key === 'length' ? 'אורך' : key}:</strong> ${value} ס"מ
+              </li>`
+            ).join('')}
+            ${configuration.color ? `<li style="padding: 5px 0;"><strong>צבע:</strong> ${configuration.color}</li>` : ''}
+          </ul>
+        </div>` : ''}
+
+        <div style="background-color: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #2c3e50;">פרטי הלקוח</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>שם:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${customer.name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>אימייל:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;" dir="ltr">${customer.email}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>טלפון:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;" dir="ltr">${customer.phone}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>כתובת:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${customer.address}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px;"><strong>שיטת משלוח:</strong></td>
+              <td style="padding: 8px;">
+                <span style="background-color: ${customer.deliveryMethod === 'pickup' ? '#27ae60' : '#3498db'}; color: white; padding: 4px 8px; border-radius: 4px;">
+                  ${customer.deliveryMethod === 'pickup' ? 'איסוף עצמי' : 'משלוח עד הבית'}
+                </span>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="background-color: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center;">
+          <p style="margin: 0;">הזמנה זו נשלחה באופן אוטומטי ממערכת Wood Kits</p>
+          <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">נא ליצור קשר עם הלקוח בהקדם</p>
+        </div>
+      </div>
+    `;
+
+    const customerEmailHtml = `
+      <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+          🪵 תודה על ההזמנה - Wood Kits
+        </h2>
+        
+        <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #155724; margin-top: 0;">שלום ${customer.name},</h3>
+          <p style="color: #155724; margin-bottom: 0;">ההזמנה שלך התקבלה בהצלחה! נחזור אליך תוך 24 שעות.</p>
+        </div>
+
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #e74c3c; margin-top: 0;">מספר הזמנה: ${orderId}</h3>
+          <p><strong>תאריך הזמנה:</strong> ${new Date(orderDate).toLocaleString('he-IL')}</p>
+        </div>
+
+        <div style="background-color: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #2c3e50;">סיכום ההזמנה</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>מוצר:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${productName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>מחיר:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">₪${calculatedPrice.toLocaleString()}</td>
+            </tr>
+            ${deliveryFee > 0 ? `
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>משלוח:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">₪${deliveryFee.toLocaleString()}</td>
+            </tr>` : ''}
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>שיטת קבלה:</strong></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                ${customer.deliveryMethod === 'pickup' ? 'איסוף עצמי' : 'משלוח עד הבית'}
+              </td>
+            </tr>
+            <tr style="background-color: #f8f9fa;">
+              <td style="padding: 8px; font-weight: bold; font-size: 18px;"><strong>סה"כ לתשלום:</strong></td>
+              <td style="padding: 8px; font-weight: bold; font-size: 18px; color: #e74c3c;">₪${finalPrice.toLocaleString()}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #856404; margin-top: 0;">השלבים הבאים:</h3>
+          <ul style="color: #856404;">
+            <li>נחזור אליך תוך 24 שעות לאישור הפרטים</li>
+            <li>נתאם איתך את זמני הייצור והאספקה</li>
+            <li>התשלום יתבצע רק לאחר אישור סופי</li>
+          </ul>
+        </div>
+
+        <div style="background-color: #2c3e50; color: white; padding: 20px; border-radius: 8px; text-align: center;">
+          <p style="margin: 0;"><strong>Wood Kits - רהיטי עץ מותאמים אישית</strong></p>
+          <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.8;">תודה שבחרת בנו!</p>
+        </div>
+      </div>
+    `;
+
+    // For testing - log order details instead of sending emails if SendGrid fails
     try {
-      await emailService.sendOrderStatusUpdate(order);
+      // Send emails
+      const messages = [
+        {
+          to: process.env.SENDGRID_TO_EMAIL || 'orders@woodkits.com',
+          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
+          subject: `🪵 הזמנה חדשה #${orderId} - ${productName}`,
+          html: adminEmailHtml
+        },
+        {
+          to: customer.email,
+          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
+          subject: `תודה על ההזמנה - Wood Kits #${orderId}`,
+          html: customerEmailHtml
+        }
+      ];
+
+      await sgMail.send(messages);
+      console.log('✅ Order emails sent successfully via SendGrid');
     } catch (emailError) {
-      console.error('Failed to send status update email:', emailError);
+      console.log('⚠️ Email sending failed, logging order details instead:');
+      console.log('Order ID:', orderId);
+      console.log('Customer:', customer);
+      console.log('Product:', productName);
+      console.log('Final Price: ₪' + finalPrice);
+      // Continue with success response even if email fails
     }
 
-    res.json({
+    console.log('Order processed successfully:', {
+      orderId,
+      customerEmail: customer.email,
+      productName
+    });
+
+    res.status(200).json({
       success: true,
-      message: 'Order status updated successfully',
+      message: 'Order submitted successfully',
       data: {
-        orderId: order.orderId,
-        status: order.status,
-        updatedAt: order.updatedAt
+        orderId,
+        orderDate,
+        finalPrice,
+        estimatedContact: '24 hours'
       }
     });
+
   } catch (error) {
-    console.error('Error updating order status:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error updating order status',
-      error: error.message
-    });
-  }
-});
-
-// @desc    Get order statistics (Admin only)
-// @route   GET /api/v1/orders/stats/summary
-// @access  Private/Admin
-router.get('/stats/summary', adminOnly, async (req, res) => {
-  try {
-    const { period = '30' } = req.query;
-    const days = parseInt(period);
-    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-
-    const stats = await Order.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalOrders: { $sum: 1 },
-          totalRevenue: { $sum: '$pricing.total' },
-          averageOrderValue: { $avg: '$pricing.total' },
-          statusCounts: {
-            $push: '$status'
-          }
-        }
-      }
-    ]);
-
-    const statusDistribution = {};
-    if (stats.length > 0) {
-      stats[0].statusCounts.forEach(status => {
-        statusDistribution[status] = (statusDistribution[status] || 0) + 1;
-      });
+    console.error('Order submission error:', error);
+    
+    // Check if it's a SendGrid error
+    if (error.code && error.code >= 400) {
+      console.error('SendGrid error:', error.response?.body);
     }
 
-    res.json({
-      success: true,
-      data: {
-        period: `${days} days`,
-        totalOrders: stats[0]?.totalOrders || 0,
-        totalRevenue: Math.round((stats[0]?.totalRevenue || 0) * 100) / 100,
-        averageOrderValue: Math.round((stats[0]?.averageOrderValue || 0) * 100) / 100,
-        statusDistribution,
-        currency: 'NIS'
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching order statistics:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching order statistics',
-      error: error.message
+      message: 'Failed to submit order',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });
