@@ -27,13 +27,8 @@ import {
   FormControlLabel,
   Radio,
   Divider,
-  Grid,
-  Card,
-  CardContent,
-  CardMedia,
-  Stack
 } from '@mui/material';
-import { ArrowBack, Build, AutoAwesome, CheckCircle, Timer, EmojiObjects } from '@mui/icons-material';
+import { ArrowBack } from '@mui/icons-material';
 import backendProductService, { ClientProduct } from '../services/backendProductService';
 import { useCart, CartItem } from '../context/CartContext';
 import Navigation from '../components/Navigation';
@@ -398,84 +393,6 @@ const ProductPageHebrew: React.FC = () => {
               </Paper>
             )}
 
-            {/* DIY Experience Showcase */}
-            <Paper sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Build sx={{ fontSize: 28, color: 'primary.main', mr: 1 }} />
-                <Typography variant="h6" fontWeight="bold">
-                  קיט DIY קל להרכבה
-                </Typography>
-              </Box>
-              
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Card sx={{ height: '100%', boxShadow: 3 }}>
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image="/images/diy/assembly-process.png"
-                      alt="תהליך הרכבה קל ומהנה"
-                      sx={{ objectFit: 'cover' }}
-                    />
-                    <CardContent>
-                      <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                        <Timer sx={{ color: 'success.main', fontSize: 20 }} />
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          הרכבה ב-30-60 דקות
-                        </Typography>
-                      </Stack>
-                      <Typography variant="body2" color="text.secondary">
-                        הדרכה ברורה בסגנון IKEA עם איורים מפורטים וכלים נדרשים
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                
-                <Grid item xs={12} md={6}>
-                  <Card sx={{ height: '100%', boxShadow: 3 }}>
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image="/images/diy/finished-product.png"
-                      alt="התוצאה הסופית - רהיט מעוצב ואיכותי"
-                      sx={{ objectFit: 'cover' }}
-                    />
-                    <CardContent>
-                      <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                        <AutoAwesome sx={{ color: 'warning.main', fontSize: 20 }} />
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          תוצאה מקצועית מבית
-                        </Typography>
-                      </Stack>
-                      <Typography variant="body2" color="text.secondary">
-                        חווה את הסיפוק של יצירה עצמית והשג רהיט איכותי ומותאם אישית
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-              
-              <Box sx={{ mt: 3, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
-                <Chip 
-                  icon={<CheckCircle />} 
-                  label="כל החומרים כלולים" 
-                  color="success" 
-                  variant="filled"
-                />
-                <Chip 
-                  icon={<EmojiObjects />} 
-                  label="הוראות הרכבה ברורות" 
-                  color="primary" 
-                  variant="filled"
-                />
-                <Chip 
-                  icon={<Build />} 
-                  label="כלים בסיסיים בלבד" 
-                  color="info" 
-                  variant="filled"
-                />
-              </Box>
-            </Paper>
 
             <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, mb: 3 }}>
               <Typography variant="h5" color="primary">
@@ -512,98 +429,6 @@ const ProductPageHebrew: React.FC = () => {
           </Box>
         </Box>
       </Container>
-
-      {/* Full-width DIY Experience Section */}
-      <Box sx={{ bgcolor: '#f8f9fa', py: 6, mt: 4 }}>
-        <Container maxWidth="lg">
-          <Typography variant="h4" align="center" fontWeight="bold" mb={2} sx={{ direction: 'rtl' }}>
-            למה לבחור ברהיטי DIY שלנו?
-          </Typography>
-          <Typography variant="h6" align="center" color="text.secondary" mb={4} sx={{ direction: 'rtl' }}>
-            חוויית בנייה מהנה עם תוצאות מקצועיות
-          </Typography>
-          
-          <Grid container spacing={4} sx={{ direction: 'rtl' }}>
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 3, textAlign: 'center', height: '100%', borderRadius: 3 }}>
-                <Box sx={{ 
-                  bgcolor: 'primary.main', 
-                  borderRadius: '50%', 
-                  width: 80, 
-                  height: 80, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  mx: 'auto',
-                  mb: 2
-                }}>
-                  <EmojiObjects sx={{ fontSize: 40, color: 'white' }} />
-                </Box>
-                <Typography variant="h6" fontWeight="bold" mb={2}>
-                  הוראות IKEA-style
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  איורים ברורים, הוראות פשוטות ורשימת כלים. בדיוק כמו שאתם אוהבים מ-IKEA, אבל עם התאמה אישית מלאה לבית שלכם.
-                </Typography>
-              </Paper>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 3, textAlign: 'center', height: '100%', borderRadius: 3 }}>
-                <Box sx={{ 
-                  bgcolor: 'success.main', 
-                  borderRadius: '50%', 
-                  width: 80, 
-                  height: 80, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  mx: 'auto',
-                  mb: 2
-                }}>
-                  <CheckCircle sx={{ fontSize: 40, color: 'white' }} />
-                </Box>
-                <Typography variant="h6" fontWeight="bold" mb={2}>
-                  איכות מובטחת
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  עץ איכותי, חומרי חיזוק מקצועיים וחלקי מתכת עמידים. כל קיט עובר בדיקת איכות לפני המשלוח.
-                </Typography>
-              </Paper>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 3, textAlign: 'center', height: '100%', borderRadius: 3 }}>
-                <Box sx={{ 
-                  bgcolor: 'warning.main', 
-                  borderRadius: '50%', 
-                  width: 80, 
-                  height: 80, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  mx: 'auto',
-                  mb: 2
-                }}>
-                  <AutoAwesome sx={{ fontSize: 40, color: 'white' }} />
-                </Box>
-                <Typography variant="h6" fontWeight="bold" mb={2}>
-                  סיפוק אישי
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  אין כמו הרגש של "עשיתי את זה בעצמי!" - תיהנו מתהליך הבנייה ותקבלו רהיט שיש לו סיפור.
-                </Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-          
-          <Box sx={{ mt: 4, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary" sx={{ direction: 'rtl' }}>
-              <strong>זמן הרכבה משוער:</strong> 30-60 דקות | <strong>כלים נדרשים:</strong> מברג, פטיש קטן | <strong>מתאים לכל הגילאים:</strong> פרויקט משפחתי מהנה
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
       
       <Snackbar
         open={showNotification}

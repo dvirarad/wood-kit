@@ -55,7 +55,8 @@
       "Bash(brew services:*)",
       "Bash(timeout:*)",
       "Bash(gtimeout:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git tag:*)"
     ],
     "deny": []
   }

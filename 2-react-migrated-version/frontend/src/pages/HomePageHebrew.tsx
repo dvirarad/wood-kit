@@ -11,9 +11,11 @@ import {
   Chip,
   Rating,
   CircularProgress,
-  Alert
+  Alert,
+  Paper,
+  Divider
 } from '@mui/material';
-import { Category as CategoryIcon } from '@mui/icons-material';
+import { Category as CategoryIcon, Build, AutoAwesome, CheckCircle, Timer, EmojiObjects } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import backendProductService, { ClientProduct } from '../services/backendProductService';
 import Navigation from '../components/Navigation';
@@ -84,10 +86,218 @@ const HomePageHebrew: React.FC = () => {
         <Typography variant="h2" component="h1" gutterBottom>
           ברוכים הבאים ל-Wood Kits
         </Typography>
-        <Typography variant="h5" color="text.secondary" mb={4}>
+        <Typography variant="h5" color="text.secondary" mb={2}>
           מוצרי עץ מותאמים אישית לבית שלכם
         </Typography>
+        <Chip 
+          label="🛠️ קיטי DIY קלים להרכבה"
+          color="primary" 
+          variant="filled"
+          sx={{ fontWeight: 'bold', fontSize: '1.1rem', py: 1, px: 2 }}
+        />
       </Box>
+
+      {/* DIY Experience Showcase */}
+      <Paper sx={{ p: 4, mb: 4, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3 }}>
+          <Build sx={{ fontSize: 32, color: 'primary.main', mr: 1 }} />
+          <Typography variant="h4" fontWeight="bold" textAlign="center">
+            חוויית DIY מהנה ומקצועית
+          </Typography>
+        </Box>
+        
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, mb: 4 }}>
+          <Box sx={{ flex: 1 }}>
+            <Card sx={{ height: '100%', boxShadow: 3, overflow: 'hidden' }}>
+              <Box sx={{ position: 'relative', height: 250 }}>
+                <CardMedia
+                  component="img"
+                  height="250"
+                  image="/images/diy/assembly-process.png"
+                  alt="תהליך הרכבה קל ומהנה"
+                  sx={{ 
+                    objectFit: 'cover',
+                    filter: 'brightness(1.1) contrast(1.05)'
+                  }}
+                />
+                <Box sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: '40%',
+                  background: 'linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%)',
+                  pointerEvents: 'none'
+                }} />
+              </Box>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Timer sx={{ color: 'success.main', fontSize: 24, mr: 1 }} />
+                  <Typography variant="h6" fontWeight="bold">
+                    הרכבה ב-30-60 דקות
+                  </Typography>
+                </Box>
+                <Typography variant="body1" color="text.secondary">
+                  הדרכה ברורה עם איורים מפורטים וכלים פשוטים. תהליך נעים ומהנה לכל המשפחה.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Box>
+          
+          <Box sx={{ flex: 1 }}>
+            <Card sx={{ height: '100%', boxShadow: 3, overflow: 'hidden' }}>
+              <Box sx={{ position: 'relative', height: 250 }}>
+                <CardMedia
+                  component="img"
+                  height="250"
+                  image="/images/diy/finished-product.png"
+                  alt="התוצאה הסופית - רהיט מעוצב ואיכותי"
+                  sx={{ 
+                    objectFit: 'cover',
+                    filter: 'brightness(1.1) contrast(1.05)'
+                  }}
+                />
+                <Box sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: '40%',
+                  background: 'linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%)',
+                  pointerEvents: 'none'
+                }} />
+              </Box>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <AutoAwesome sx={{ color: 'warning.main', fontSize: 24, mr: 1 }} />
+                  <Typography variant="h6" fontWeight="bold">
+                    תוצאה מקצועית מבית
+                  </Typography>
+                </Box>
+                <Typography variant="body1" color="text.secondary">
+                  חווה את הסיפוק של יצירה עצמית והשג רהיט איכותי ומותאם אישית לחלל שלך.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Box>
+        </Box>
+        
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
+          <Chip 
+            icon={<CheckCircle />} 
+            label="כל החומרים כלולים" 
+            color="success" 
+            variant="filled"
+            sx={{ fontSize: '1rem' }}
+          />
+          <Chip 
+            icon={<EmojiObjects />} 
+            label="הוראות הרכבה ברורות" 
+            color="primary" 
+            variant="filled"
+            sx={{ fontSize: '1rem' }}
+          />
+          <Chip 
+            icon={<Build />} 
+            label="כלים בסיסיים בלבד" 
+            color="info" 
+            variant="filled"
+            sx={{ fontSize: '1rem' }}
+          />
+        </Box>
+      </Paper>
+
+      {/* Why Choose Our DIY Kits */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" align="center" fontWeight="bold" mb={2}>
+          למה לבחור ברהיטי DIY שלנו?
+        </Typography>
+        <Typography variant="h6" align="center" color="text.secondary" mb={4}>
+          חוויית בנייה מהנה עם תוצאות מקצועיות
+        </Typography>
+        
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+          <Box sx={{ flex: 1 }}>
+            <Paper sx={{ p: 3, textAlign: 'center', height: '100%', borderRadius: 3 }}>
+              <Box sx={{ 
+                bgcolor: 'primary.main', 
+                borderRadius: '50%', 
+                width: 80, 
+                height: 80, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2
+              }}>
+                <EmojiObjects sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography variant="h6" fontWeight="bold" mb={2}>
+                הוראות הרכבה ברורות
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                איורים מפורטים, הוראות פשוטות ורשימת כלים. בדיוק כמו שאתם אוהבים, אבל עם התאמה אישית מלאה לבית שלכם.
+              </Typography>
+            </Paper>
+          </Box>
+          
+          <Box sx={{ flex: 1 }}>
+            <Paper sx={{ p: 3, textAlign: 'center', height: '100%', borderRadius: 3 }}>
+              <Box sx={{ 
+                bgcolor: 'success.main', 
+                borderRadius: '50%', 
+                width: 80, 
+                height: 80, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2
+              }}>
+                <CheckCircle sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography variant="h6" fontWeight="bold" mb={2}>
+                איכות מובטחת
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                עץ איכותי, חומרי חיזוק מקצועיים וחלקי מתכת עמידים. כל קיט עובר בדיקת איכות לפני המשלוח.
+              </Typography>
+            </Paper>
+          </Box>
+          
+          <Box sx={{ flex: 1 }}>
+            <Paper sx={{ p: 3, textAlign: 'center', height: '100%', borderRadius: 3 }}>
+              <Box sx={{ 
+                bgcolor: 'warning.main', 
+                borderRadius: '50%', 
+                width: 80, 
+                height: 80, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2
+              }}>
+                <AutoAwesome sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography variant="h6" fontWeight="bold" mb={2}>
+                סיפוק אישי
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                אין כמו הרגש של "עשיתי את זה בעצמי!" - תיהנו מתהליך הבנייה ותקבלו רהיט שיש לו סיפור.
+              </Typography>
+            </Paper>
+          </Box>
+        </Box>
+        
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            <strong>זמן הרכבה משוער:</strong> 30-60 דקות | <strong>כלים נדרשים:</strong> מברגה חשמלית, פלס | <strong>מתאים לכל הגילאים:</strong> פרויקט משפחתי מהנה
+          </Typography>
+        </Box>
+      </Box>
+
+      <Divider sx={{ mb: 4 }} />
 
       <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3 }}>
         המוצרים שלנו
