@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
+import APP_VERSION from '../config/version';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -189,6 +190,13 @@ const AdminDashboard: React.FC = () => {
               </List>
             </Paper>
           </Box>
+        </Box>
+
+        {/* Version Display */}
+        <Box sx={{ mt: 4, p: 2, textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary">
+            גרסה {APP_VERSION.version} • Build {APP_VERSION.buildNumber} • {new Date(APP_VERSION.buildDate).toLocaleDateString('he-IL')}
+          </Typography>
         </Box>
       </Container>
     </>

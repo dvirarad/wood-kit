@@ -115,7 +115,7 @@ class ProductManagerService {
         id: '1',
         name: { he: 'ארון ספרים אמסטרדם', en: 'Amsterdam Bookshelf' },
         description: { he: 'ארון ספרים יפה ומעוצב מעץ מלא', en: 'Beautiful designed solid wood bookshelf' },
-        category: 'רהיטים',
+        category: 'furniture',
         basePrice: 800,
         dimensions: {
           length: { min: 60, max: 200, default: 120, step: 10, visible: true, editable: true, priceModifier: 2.5 },

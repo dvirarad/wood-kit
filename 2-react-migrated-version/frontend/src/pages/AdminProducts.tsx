@@ -190,6 +190,17 @@ const AdminProducts: React.FC = () => {
   const handleSaveProduct = async () => {
     if (!editingProduct) return;
     
+    // Validate required translations
+    if (!editingProduct.name?.en || !editingProduct.name?.es) {
+      alert('נדרש שם בעברית, אנגלית וספרדית');
+      return;
+    }
+    
+    if (!editingProduct.description?.en || !editingProduct.description?.es) {
+      alert('נדרש תיאור בעברית, אנגלית וספרדית');
+      return;
+    }
+    
     try {
       if (editingProduct.id) {
         // Update existing product
@@ -510,10 +521,11 @@ const AdminProducts: React.FC = () => {
                               category: e.target.value
                             })}
                           >
-                            <MenuItem value="רהיטים">רהיטים</MenuItem>
-                            <MenuItem value="גן">גן</MenuItem>
-                            <MenuItem value="אחסון">אחסון</MenuItem>
-                            <MenuItem value="דקורציה">דקורציה</MenuItem>
+                            <MenuItem value="furniture">רהיטים</MenuItem>
+                            <MenuItem value="outdoor">גן</MenuItem>
+                            <MenuItem value="bookshelf">ספרייה</MenuItem>
+                            <MenuItem value="stairs">מדרגות</MenuItem>
+                            <MenuItem value="pet">חיות מחמד</MenuItem>
                           </Select>
                         </FormControl>
                         <TextField
