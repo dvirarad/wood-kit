@@ -8,6 +8,8 @@ interface BackendProduct {
   productId: string;
   name?: any; // Can be string or object with language translations
   description?: any; // Can be string or object with language translations
+  shortDescription?: any; // Can be string or object with language translations
+  fullDescription?: any; // Can be string or object with language translations
   basePrice: number;
   currency: string;
   dimensions: {
@@ -53,6 +55,8 @@ export interface ClientProduct {
   productId: string;
   name: { he: string; en: string };
   description: { he: string; en: string };
+  shortDescription: { he: string; en: string };
+  fullDescription: { he: string; en: string };
   category: string;
   basePrice: number;
   images: Array<{ url: string; isPrimary: boolean }>;
@@ -123,12 +127,16 @@ class BackendProductService {
     // Use backend name field if available, otherwise fallback to productId mapping
     const productNames = this.getProductNames(backendProduct.productId, backendProduct.name);
     const productDescriptions = this.getProductDescriptions(backendProduct.productId, backendProduct.description);
+    const productShortDescriptions = this.getProductDescriptions(backendProduct.productId, backendProduct.shortDescription);
+    const productFullDescriptions = this.getProductDescriptions(backendProduct.productId, backendProduct.fullDescription);
 
     return {
       id: backendProduct.id || '',
       productId: backendProduct.productId || '',
       name: productNames,
       description: productDescriptions,
+      shortDescription: productShortDescriptions,
+      fullDescription: productFullDescriptions,
       category: backendProduct.category || '',
       basePrice: backendProduct.basePrice || 0,
       images: (backendProduct.images || [])

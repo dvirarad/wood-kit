@@ -83,7 +83,23 @@ const HomePageHebrew: React.FC = () => {
       <Navigation />
       <Container maxWidth="lg" sx={{ py: 4, direction: 'rtl' }}>
       
-      {/* Products Section - Now First! */}
+      {/* Hero Section - First as requested */}
+      <Box textAlign="center" mb={6}>
+        <Typography variant="h2" component="h1" gutterBottom>
+          ברוכים הבאים ל-Wood Kits
+        </Typography>
+        <Typography variant="h5" color="text.secondary" mb={2}>
+          מוצרי עץ מותאמים אישית לבית שלכם
+        </Typography>
+        <Chip 
+          label="🛠️ קיטי DIY קלים להרכבה"
+          color="primary" 
+          variant="filled"
+          sx={{ fontWeight: 'bold', fontSize: '1.1rem', py: 1, px: 2 }}
+        />
+      </Box>
+
+      {/* Products Section - Second as requested */}
       <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3 }}>
         המוצרים שלנו
       </Typography>
@@ -128,7 +144,7 @@ const HomePageHebrew: React.FC = () => {
                   {product.name.he}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {product.description.he}
+                  {product.shortDescription?.he || product.description.he}
                 </Typography>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -191,22 +207,6 @@ const HomePageHebrew: React.FC = () => {
       )}
 
       <Divider sx={{ mb: 4 }} />
-
-      {/* Welcome Section - Now Second */}
-      <Box textAlign="center" mb={4}>
-        <Typography variant="h2" component="h1" gutterBottom>
-          ברוכים הבאים ל-Wood Kits
-        </Typography>
-        <Typography variant="h5" color="text.secondary" mb={2}>
-          מוצרי עץ מותאמים אישית לבית שלכם
-        </Typography>
-        <Chip 
-          label="🛠️ קיטי DIY קלים להרכבה"
-          color="primary" 
-          variant="filled"
-          sx={{ fontWeight: 'bold', fontSize: '1.1rem', py: 1, px: 2 }}
-        />
-      </Box>
 
       {/* DIY Experience Showcase */}
       <Paper sx={{ p: 4, mb: 4, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>

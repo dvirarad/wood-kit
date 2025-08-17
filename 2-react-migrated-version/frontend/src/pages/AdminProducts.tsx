@@ -201,6 +201,16 @@ const AdminProducts: React.FC = () => {
       return;
     }
     
+    if (!editingProduct.shortDescription?.en || !editingProduct.shortDescription?.es) {
+      alert('נדרש תיאור קצר בעברית, אנגלית וספרדית');
+      return;
+    }
+    
+    if (!editingProduct.fullDescription?.en || !editingProduct.fullDescription?.es) {
+      alert('נדרש תיאור מלא בעברית, אנגלית וספרדית');
+      return;
+    }
+    
     try {
       if (editingProduct.id) {
         // Update existing product
@@ -511,6 +521,83 @@ const AdminProducts: React.FC = () => {
                           })}
                         />
                       </Box>
+                      
+                      {/* Short Description Fields */}
+                      <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>תיאור קצר (יוצג בעמוד הבית)</Typography>
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <TextField
+                          sx={{ flex: '1 1 300px' }}
+                          multiline
+                          rows={2}
+                          label="תיאור קצר (עברית)"
+                          value={editingProduct.shortDescription?.he || ''}
+                          onChange={(e) => setEditingProduct({
+                            ...editingProduct,
+                            shortDescription: { ...(editingProduct.shortDescription || { he: '', en: '', es: '' }), he: e.target.value }
+                          })}
+                        />
+                        <TextField
+                          sx={{ flex: '1 1 300px' }}
+                          multiline
+                          rows={2}
+                          label="תיאור קצר (אנגלית)"
+                          value={editingProduct.shortDescription?.en || ''}
+                          onChange={(e) => setEditingProduct({
+                            ...editingProduct,
+                            shortDescription: { ...(editingProduct.shortDescription || { he: '', en: '', es: '' }), en: e.target.value }
+                          })}
+                        />
+                        <TextField
+                          sx={{ flex: '1 1 300px' }}
+                          multiline
+                          rows={2}
+                          label="תיאור קצר (ספרדית)"
+                          value={editingProduct.shortDescription?.es || ''}
+                          onChange={(e) => setEditingProduct({
+                            ...editingProduct,
+                            shortDescription: { ...(editingProduct.shortDescription || { he: '', en: '', es: '' }), es: e.target.value }
+                          })}
+                        />
+                      </Box>
+
+                      {/* Full Description Fields */}
+                      <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>תיאור מלא (יוצג בעמוד המוצר)</Typography>
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <TextField
+                          sx={{ flex: '1 1 300px' }}
+                          multiline
+                          rows={4}
+                          label="תיאור מלא (עברית)"
+                          value={editingProduct.fullDescription?.he || ''}
+                          onChange={(e) => setEditingProduct({
+                            ...editingProduct,
+                            fullDescription: { ...(editingProduct.fullDescription || { he: '', en: '', es: '' }), he: e.target.value }
+                          })}
+                        />
+                        <TextField
+                          sx={{ flex: '1 1 300px' }}
+                          multiline
+                          rows={4}
+                          label="תיאור מלא (אנגלית)"
+                          value={editingProduct.fullDescription?.en || ''}
+                          onChange={(e) => setEditingProduct({
+                            ...editingProduct,
+                            fullDescription: { ...(editingProduct.fullDescription || { he: '', en: '', es: '' }), en: e.target.value }
+                          })}
+                        />
+                        <TextField
+                          sx={{ flex: '1 1 300px' }}
+                          multiline
+                          rows={4}
+                          label="תיאור מלא (ספרדית)"
+                          value={editingProduct.fullDescription?.es || ''}
+                          onChange={(e) => setEditingProduct({
+                            ...editingProduct,
+                            fullDescription: { ...(editingProduct.fullDescription || { he: '', en: '', es: '' }), es: e.target.value }
+                          })}
+                        />
+                      </Box>
+                      
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <FormControl sx={{ flex: 1 }}>
                           <InputLabel>קטגוריה</InputLabel>
