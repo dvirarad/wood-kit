@@ -53,10 +53,10 @@ interface BackendProduct {
 export interface ClientProduct {
   id: string;
   productId: string;
-  name: { he: string; en: string };
-  description: { he: string; en: string };
-  shortDescription: { he: string; en: string };
-  fullDescription: { he: string; en: string };
+  name: { he: string; en: string; es: string };
+  description: { he: string; en: string; es: string };
+  shortDescription: { he: string; en: string; es: string };
+  fullDescription: { he: string; en: string; es: string };
   category: string;
   basePrice: number;
   images: Array<{ url: string; isPrimary: boolean }>;
@@ -164,89 +164,100 @@ class BackendProductService {
     };
   }
 
-  // Helper function to get Hebrew/English names from backend data or productId fallback
-  private getProductNames(productId: string, backendName?: any): { he: string; en: string } {
+  // Helper function to get Hebrew/English/Spanish names from backend data or productId fallback
+  private getProductNames(productId: string, backendName?: any): { he: string; en: string; es: string } {
     // If backend provides structured name data, use it
     if (backendName && typeof backendName === 'object') {
       return {
         he: backendName.he || backendName.Hebrew || '',
-        en: backendName.en || backendName.English || ''
+        en: backendName.en || backendName.English || '',
+        es: backendName.es || backendName.Spanish || ''
       };
     }
     
-    // If backend provides a simple string name, use it for Hebrew and try to create English
+    // If backend provides a simple string name, use it for Hebrew and try to create English/Spanish
     if (backendName && typeof backendName === 'string' && backendName.trim() !== '') {
       return {
         he: backendName.trim(),
-        en: backendName.trim() // For now, use same name for both languages
+        en: backendName.trim(), // For now, use same name for all languages
+        es: backendName.trim()
       };
     }
     
     // Fallback to hardcoded mapping for known productIds
-    const nameMap: { [key: string]: { he: string; en: string } } = {
-      'amsterdam-bookshelf': { he: 'ספרייה אמסטרדם', en: 'Amsterdam Bookshelf' },
-      'venice-bookshelf': { he: 'ספרייה ונציה', en: 'Venice Bookshelf' },
-      'garden-bench': { he: 'ספסל גן', en: 'Garden Bench' },
-      'stairs': { he: 'מדרגות מותאמות', en: 'Custom Stairs' },
-      'dog-bed': { he: 'מיטת כלב', en: 'Dog Bed' },
-      'wooden-planter': { he: 'עציץ עץ', en: 'Wooden Planter' },
-      'test-steps': { he: 'מדרגות מבחן', en: 'Test Steps' }
+    const nameMap: { [key: string]: { he: string; en: string; es: string } } = {
+      'amsterdam-bookshelf': { he: 'ספרייה אמסטרדם', en: 'Amsterdam Bookshelf', es: 'Estantería Amsterdam' },
+      'venice-bookshelf': { he: 'ספרייה ונציה', en: 'Venice Bookshelf', es: 'Estantería Venecia' },
+      'garden-bench': { he: 'ספסל גן', en: 'Garden Bench', es: 'Banco de Jardín' },
+      'stairs': { he: 'מדרגות מותאמות', en: 'Custom Stairs', es: 'Escaleras Personalizadas' },
+      'dog-bed': { he: 'מיטת כלב', en: 'Dog Bed', es: 'Cama para Perros' },
+      'wooden-planter': { he: 'עציץ עץ', en: 'Wooden Planter', es: 'Maceta de Madera' },
+      'test-steps': { he: 'מדרגות מבחן', en: 'Test Steps', es: 'Escalones de Prueba' }
     };
     
-    return nameMap[productId] || { he: 'מוצר ללא שם', en: 'Unnamed Product' };
+    return nameMap[productId] || { he: 'מוצר ללא שם', en: 'Unnamed Product', es: 'Producto Sin Nombre' };
   }
 
-  // Helper function to get Hebrew/English descriptions from backend data or productId fallback
-  private getProductDescriptions(productId: string, backendDescription?: any): { he: string; en: string } {
+  // Helper function to get Hebrew/English/Spanish descriptions from backend data or productId fallback
+  private getProductDescriptions(productId: string, backendDescription?: any): { he: string; en: string; es: string } {
     // If backend provides structured description data, use it
     if (backendDescription && typeof backendDescription === 'object') {
       return {
         he: backendDescription.he || backendDescription.Hebrew || '',
-        en: backendDescription.en || backendDescription.English || ''
+        en: backendDescription.en || backendDescription.English || '',
+        es: backendDescription.es || backendDescription.Spanish || ''
       };
     }
     
-    // If backend provides a simple string description, use it for Hebrew and try to create English
+    // If backend provides a simple string description, use it for Hebrew and try to create English/Spanish
     if (backendDescription && typeof backendDescription === 'string' && backendDescription.trim() !== '') {
       return {
         he: backendDescription.trim(),
-        en: backendDescription.trim() // For now, use same description for both languages
+        en: backendDescription.trim(), // For now, use same description for all languages
+        es: backendDescription.trim()
       };
     }
     
     // Fallback to hardcoded mapping for known productIds
-    const descMap: { [key: string]: { he: string; en: string } } = {
+    const descMap: { [key: string]: { he: string; en: string; es: string } } = {
       'amsterdam-bookshelf': { 
         he: 'ספרייה מודרנית עם קווים נקיים. התאימו גובה ורוחב כדי להתאים לחלל שלכם בצורה מושלמת.', 
-        en: 'Modern bookshelf with clean lines. Customize height and width to fit your space perfectly.' 
+        en: 'Modern bookshelf with clean lines. Customize height and width to fit your space perfectly.',
+        es: 'Estantería moderna con líneas limpias. Personaliza altura y ancho para adaptarse perfectamente a tu espacio.'
       },
       'venice-bookshelf': { 
         he: 'ספרייה בעיצוב קלאסי עם קימורים אלגנטיים. בחרו את המידות שלכם להתאמה מושלמת.', 
-        en: 'Classic design bookshelf with elegant curves. Choose your dimensions for the perfect fit.' 
+        en: 'Classic design bookshelf with elegant curves. Choose your dimensions for the perfect fit.',
+        es: 'Estantería de diseño clásico con curvas elegantes. Elige tus dimensiones para el ajuste perfecto.'
       },
       'garden-bench': { 
         he: 'ספסל גן מעץ מלא עמיד בפני מזג אוויר', 
-        en: 'Weather-resistant solid wood garden bench' 
+        en: 'Weather-resistant solid wood garden bench',
+        es: 'Banco de jardín de madera maciza resistente a la intemperie'
       },
       'stairs': { 
         he: 'מדרגות עץ לשימוש פנימי. מידות הניתנות להתאמה מלאה עם מעקה אופציונלי.', 
-        en: 'Wooden stairs for indoor use. Fully customizable dimensions with optional handrail.' 
+        en: 'Wooden stairs for indoor use. Fully customizable dimensions with optional handrail.',
+        es: 'Escaleras de madera para uso interior. Dimensiones totalmente personalizables con barandilla opcional.'
       },
       'dog-bed': { 
         he: 'מיטה נוחה וחמה לכלב שלכם', 
-        en: 'Comfortable and warm bed for your dog' 
+        en: 'Comfortable and warm bed for your dog',
+        es: 'Cama cómoda y cálida para tu perro'
       },
       'wooden-planter': { 
         he: 'עציץ עץ מעוצב לגינה שלכם', 
-        en: 'Designed wooden planter for your garden' 
+        en: 'Designed wooden planter for your garden',
+        es: 'Maceta de madera diseñada para tu jardín'
       },
       'test-steps': {
         he: 'מוצר מדרגות מבחן עם קביעת מידות נכונה לבדיקת אינטגרציה בין אדמין ולקוח.',
-        en: 'Test steps product with proper dimension configuration for testing admin/client integration.'
+        en: 'Test steps product with proper dimension configuration for testing admin/client integration.',
+        es: 'Producto de escalones de prueba con configuración de dimensiones adecuada para probar la integración admin/cliente.'
       }
     };
     
-    return descMap[productId] || { he: 'תיאור המוצר', en: 'Product description' };
+    return descMap[productId] || { he: 'תיאור המוצר', en: 'Product description', es: 'Descripción del producto' };
   }
 
   // Event listener system for real-time updates
