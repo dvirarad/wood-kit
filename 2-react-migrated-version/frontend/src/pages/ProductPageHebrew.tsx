@@ -568,7 +568,7 @@ const ProductPageHebrew: React.FC = () => {
                     control={<Radio />}
                     label={
                       <Box>
-                        <Typography variant="body1">איסוף עצמי</Typography>
+                        <Typography variant="body1">איסוף עצמי (פרדס חנה)</Typography>
                         <Typography variant="body2" color="text.secondary">
                           ללא עלות נוספת
                         </Typography>
