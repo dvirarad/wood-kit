@@ -22,6 +22,9 @@
     "start:prod": "serve -s build -p ${PORT:-6005}",
     "build": "npm run update-version && react-scripts build",
     "test": "react-scripts test",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:ci": "start-server-and-test start http://localhost:3000 test:e2e",
     "eject": "react-scripts eject",
     "dev": "react-scripts start",
     "update-version": "node scripts/update-version.js"
@@ -38,5 +41,10 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:6003"
+  "proxy": "http://localhost:6003",
+  "devDependencies": {
+    "@testing-library/cypress": "^10.0.3",
+    "cypress": "^14.5.4",
+    "start-server-and-test": "^2.0.13"
+  }
 }

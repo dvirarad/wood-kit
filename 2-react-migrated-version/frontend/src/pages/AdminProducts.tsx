@@ -237,29 +237,13 @@ const AdminProducts: React.FC = () => {
     }
     
     try {
-      // Prepare data for backend - convert Hebrew-only format to backend object format
+      // Prepare data for backend - Hebrew only
       const backendData = {
         ...editingProduct,
-        name: {
-          he: editingProduct.name?.he || '',
-          en: editingProduct.name?.he || '', // Use Hebrew as fallback for other languages
-          es: editingProduct.name?.he || ''
-        },
-        description: {
-          he: editingProduct.description?.he || '',
-          en: editingProduct.description?.he || '',
-          es: editingProduct.description?.he || ''
-        },
-        shortDescription: {
-          he: editingProduct.shortDescription?.he || '',
-          en: editingProduct.shortDescription?.he || '',
-          es: editingProduct.shortDescription?.he || ''
-        },
-        fullDescription: {
-          he: editingProduct.fullDescription?.he || '',
-          en: editingProduct.fullDescription?.he || '',
-          es: editingProduct.fullDescription?.he || ''
-        }
+        name: editingProduct.name?.he || '',
+        description: editingProduct.description?.he || '',
+        shortDescription: editingProduct.shortDescription?.he || '',
+        fullDescription: editingProduct.fullDescription?.he || ''
       };
       
       if (editingProduct.id) {

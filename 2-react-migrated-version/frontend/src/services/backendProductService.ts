@@ -53,10 +53,10 @@ interface BackendProduct {
 export interface ClientProduct {
   id: string;
   productId: string;
-  name: { he: string; en: string; es: string };
-  description: { he: string; en: string; es: string };
-  shortDescription: { he: string; en: string; es: string };
-  fullDescription: { he: string; en: string; es: string };
+  name: { he: string };
+  description: { he: string };
+  shortDescription: { he: string };
+  fullDescription: { he: string };
   category: string;
   basePrice: number;
   images: Array<{ url: string; isPrimary: boolean }>;
@@ -164,57 +164,49 @@ class BackendProductService {
     };
   }
 
-  // Helper function to get Hebrew/English/Spanish names from backend data or productId fallback
-  private getProductNames(productId: string, backendName?: any): { he: string; en: string; es: string } {
-    // If backend provides structured name data, use it
+  // Helper function to get Hebrew names from backend data or productId fallback
+  private getProductNames(productId: string, backendName?: any): { he: string } {
+    // If backend provides structured name data, use Hebrew
     if (backendName && typeof backendName === 'object') {
       return {
-        he: backendName.he || backendName.Hebrew || '',
-        en: backendName.en || backendName.English || '',
-        es: backendName.es || backendName.Spanish || ''
+        he: backendName.he || backendName.Hebrew || ''
       };
     }
     
-    // If backend provides a simple string name, use it for Hebrew and try to create English/Spanish
+    // If backend provides a simple string name, use it for Hebrew
     if (backendName && typeof backendName === 'string' && backendName.trim() !== '') {
       return {
-        he: backendName.trim(),
-        en: backendName.trim(), // For now, use same name for all languages
-        es: backendName.trim()
+        he: backendName.trim()
       };
     }
     
     // Fallback to hardcoded mapping for known productIds
-    const nameMap: { [key: string]: { he: string; en: string; es: string } } = {
-      'amsterdam-bookshelf': { he: 'ספרייה אמסטרדם', en: 'Amsterdam Bookshelf', es: 'Estantería Amsterdam' },
-      'venice-bookshelf': { he: 'ספרייה ונציה', en: 'Venice Bookshelf', es: 'Estantería Venecia' },
-      'garden-bench': { he: 'ספסל גן', en: 'Garden Bench', es: 'Banco de Jardín' },
-      'stairs': { he: 'מדרגות מותאמות', en: 'Custom Stairs', es: 'Escaleras Personalizadas' },
-      'dog-bed': { he: 'מיטת כלב', en: 'Dog Bed', es: 'Cama para Perros' },
-      'wooden-planter': { he: 'עציץ עץ', en: 'Wooden Planter', es: 'Maceta de Madera' },
-      'test-steps': { he: 'מדרגות מבחן', en: 'Test Steps', es: 'Escalones de Prueba' }
+    const nameMap: { [key: string]: { he: string } } = {
+      'amsterdam-bookshelf': { he: 'ספרייה אמסטרדם' },
+      'venice-bookshelf': { he: 'ספרייה ונציה' },
+      'garden-bench': { he: 'ספסל גן' },
+      'stairs': { he: 'מדרגות מותאמות' },
+      'dog-bed': { he: 'מיטת כלב' },
+      'wooden-planter': { he: 'עציץ עץ' },
+      'test-steps': { he: 'מדרגות מבחן' }
     };
     
-    return nameMap[productId] || { he: 'מוצר ללא שם', en: 'Unnamed Product', es: 'Producto Sin Nombre' };
+    return nameMap[productId] || { he: 'מוצר ללא שם' };
   }
 
   // Helper function to get Hebrew/English/Spanish descriptions from backend data or productId fallback
-  private getProductDescriptions(productId: string, backendDescription?: any): { he: string; en: string; es: string } {
-    // If backend provides structured description data, use it
+  private getProductDescriptions(productId: string, backendDescription?: any): { he: string } {
+    // If backend provides structured description data, use Hebrew
     if (backendDescription && typeof backendDescription === 'object') {
       return {
-        he: backendDescription.he || backendDescription.Hebrew || '',
-        en: backendDescription.en || backendDescription.English || '',
-        es: backendDescription.es || backendDescription.Spanish || ''
+        he: backendDescription.he || backendDescription.Hebrew || ''
       };
     }
     
-    // If backend provides a simple string description, use it for Hebrew and try to create English/Spanish
+    // If backend provides a simple string description, use it for Hebrew
     if (backendDescription && typeof backendDescription === 'string' && backendDescription.trim() !== '') {
       return {
-        he: backendDescription.trim(),
-        en: backendDescription.trim(), // For now, use same description for all languages
-        es: backendDescription.trim()
+        he: backendDescription.trim()
       };
     }
     
