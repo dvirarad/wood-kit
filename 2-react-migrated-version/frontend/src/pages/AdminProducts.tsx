@@ -128,7 +128,19 @@ const AdminProducts: React.FC = () => {
   const loadProducts = async () => {
     try {
       const allProducts = await backendProductService.getAllProducts();
-      setProducts(allProducts);
+      // Convert backend format to admin format
+      const convertedProducts = allProducts.map(product => ({
+        ...product,
+        name: typeof product.name === 'string' ? { he: product.name } : 
+              product.name?.he ? { he: product.name.he } : { he: '' },
+        description: typeof product.description === 'string' ? { he: product.description } : 
+                    product.description?.he ? { he: product.description.he } : { he: '' },
+        shortDescription: typeof product.shortDescription === 'string' ? { he: product.shortDescription } : 
+                         product.shortDescription?.he ? { he: product.shortDescription.he } : { he: '' },
+        fullDescription: typeof product.fullDescription === 'string' ? { he: product.fullDescription } : 
+                        product.fullDescription?.he ? { he: product.fullDescription.he } : { he: '' }
+      }));
+      setProducts(convertedProducts);
     } catch (error) {
       console.error('Failed to load products:', error);
     }
@@ -187,7 +199,15 @@ const AdminProducts: React.FC = () => {
   };
 
   const handleEditProduct = (product: AdminProduct) => {
-    setEditingProduct({ ...product });
+    // Ensure all text fields have proper Hebrew structure
+    const editableProduct = {
+      ...product,
+      name: product.name?.he ? { he: product.name.he } : { he: '' },
+      description: product.description?.he ? { he: product.description.he } : { he: '' },
+      shortDescription: product.shortDescription?.he ? { he: product.shortDescription.he } : { he: '' },
+      fullDescription: product.fullDescription?.he ? { he: product.fullDescription.he } : { he: '' }
+    };
+    setEditingProduct(editableProduct);
     resetImageForm();
     setDialogOpen(true);
   };
@@ -217,12 +237,21 @@ const AdminProducts: React.FC = () => {
     }
     
     try {
+      // Prepare data for backend - convert Hebrew-only format to backend format
+      const backendData = {
+        ...editingProduct,
+        name: editingProduct.name?.he || '',
+        description: editingProduct.description?.he || '',
+        shortDescription: editingProduct.shortDescription?.he || '',
+        fullDescription: editingProduct.fullDescription?.he || ''
+      };
+      
       if (editingProduct.id) {
         // Update existing product
-        await backendProductService.updateProduct(editingProduct.id, editingProduct);
+        await backendProductService.updateProduct(editingProduct.id, backendData);
       } else {
         // Add new product
-        await backendProductService.addProduct(editingProduct);
+        await backendProductService.addProduct(backendData);
       }
       
       setDialogOpen(false);

@@ -338,6 +338,7 @@ class BackendProductService {
     depth?: number; 
     length?: number; // Support old format for stairs
     steps?: number;  // Support steps for stairs
+    shelves?: number; // Support shelves for furniture
     color?: string 
   }): Promise<number> {
     try {
@@ -379,6 +380,7 @@ class BackendProductService {
     depth?: number; 
     length?: number;
     steps?: number;
+    shelves?: number;
     color?: string 
   }): number {
     try {
@@ -389,14 +391,16 @@ class BackendProductService {
           dimensions: {
             width: { min: 60, max: 120, default: 80, multiplier: 0.3 },
             height: { min: 100, max: 250, default: 180, multiplier: 0.5 },
-            depth: { min: 25, max: 40, default: 30, multiplier: 0.4 }
+            depth: { min: 25, max: 40, default: 30, multiplier: 0.4 },
+            shelves: { min: 1, max: 8, default: 3, multiplier: 25 }
           }
         },
         'venice-bookshelf': {
           basePrice: 249,
           dimensions: {
             width: { min: 70, max: 140, default: 90, multiplier: 0.35 },
-            height: { min: 120, max: 300, default: 200, multiplier: 0.4 }
+            height: { min: 120, max: 300, default: 200, multiplier: 0.4 },
+            shelves: { min: 1, max: 10, default: 4, multiplier: 30 }
           }
         },
         'stairs': {

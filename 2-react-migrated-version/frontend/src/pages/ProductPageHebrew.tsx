@@ -135,6 +135,7 @@ const ProductPageHebrew: React.FC = () => {
           height: debouncedDimensions.height,
           depth: debouncedDimensions.depth,
           steps: debouncedDimensions.steps,
+          shelves: debouncedDimensions.shelves,
           color: debouncedSelectedColor
         };
         const totalPrice = await backendProductService.calculatePrice(product.productId, customizations);
@@ -173,7 +174,10 @@ const ProductPageHebrew: React.FC = () => {
         productName: product.name.he,
         basePrice: product.basePrice,
         configuration: {
-          dimensions,
+          dimensions: {
+            ...dimensions,
+            shelves: dimensions.shelves
+          },
           color: selectedColor
         },
         calculatedPrice: calculatedPrice,
@@ -379,7 +383,7 @@ const ProductPageHebrew: React.FC = () => {
                   return (
                     <Box key={key} sx={{ mb: 3 }}>
                       <Typography variant="subtitle1" gutterBottom>
-                        {key === 'height' ? 'גובה' : key === 'width' ? 'רוחב' : key === 'length' ? 'אורך' : key === 'depth' ? 'עומק' : key} ({config.min}-{config.max} ס"מ)
+                        {key === 'height' ? 'גובה' : key === 'width' ? 'רוחב' : key === 'length' ? 'אורך' : key === 'depth' ? 'עומק' : key === 'shelves' ? 'כמות מדפים' : key} ({key === 'shelves' ? config.min + '-' + config.max + ' יחידות' : config.min + '-' + config.max + ' ס"מ'})
                       </Typography>
                       <Slider
                         value={dimensions[key] || config.default}
