@@ -393,7 +393,7 @@ class BackendProductService {
 
       totalPrice += colorCost;
 
-      return Math.max(Math.round(totalPrice * 100) / 100, 0);
+      return Math.max(Math.round(totalPrice), 0);
     } catch (error) {
       console.error('Fallback price calculation error:', error);
       return 0;

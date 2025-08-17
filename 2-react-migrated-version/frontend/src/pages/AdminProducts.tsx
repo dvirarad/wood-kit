@@ -407,7 +407,7 @@ const AdminProducts: React.FC = () => {
                   <TableCell>{product.name?.he || product.productId}</TableCell>
                   <TableCell>{product.category}</TableCell>
                   <TableCell>₪{product.basePrice}</TableCell>
-                  <TableCell>₪{calculateExamplePrice(product).toFixed(2)}</TableCell>
+                  <TableCell>₪{Math.round(calculateExamplePrice(product))}</TableCell>
                   <TableCell>
                     <Chip 
                       label={product.inventory.inStock ? `${product.inventory.stockLevel} יחידות` : 'אזל המלאי'}
@@ -643,7 +643,7 @@ const AdminProducts: React.FC = () => {
                   <Box>
                     <Alert severity="info">
                       <Typography variant="subtitle2">
-                        תצוגה מקדימה של מחיר: ₪{calculateExamplePrice(editingProduct).toFixed(2)}
+                        תצוגה מקדימה של מחיר: ₪{Math.round(calculateExamplePrice(editingProduct))}
                       </Typography>
                       <Typography variant="caption">
                         (מבוסס על ממדי ברירת המחדל)

@@ -418,7 +418,7 @@ const ProductPageHebrew: React.FC = () => {
 
             <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, mb: 3 }}>
               <Typography variant="h5" color="primary">
-                מחיר: ₪{calculatingPrice ? '...' : calculatedPrice.toLocaleString()}
+                מחיר: ₪{calculatingPrice ? '...' : Math.round(calculatedPrice).toLocaleString()}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 כולל מע"ם
@@ -485,7 +485,7 @@ const ProductPageHebrew: React.FC = () => {
             המשך להזמנה
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {product?.name.he} - ₪{calculatedPrice.toLocaleString()}
+            {product?.name.he} - ₪{Math.round(calculatedPrice).toLocaleString()}
           </Typography>
         </DialogTitle>
         
@@ -584,7 +584,7 @@ const ProductPageHebrew: React.FC = () => {
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography>מחיר המוצר:</Typography>
-                <Typography>₪{calculatedPrice.toLocaleString()}</Typography>
+                <Typography>₪{Math.round(calculatedPrice).toLocaleString()}</Typography>
               </Box>
               {orderForm.deliveryMethod === 'shipping' && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -596,7 +596,7 @@ const ProductPageHebrew: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
                 <Typography variant="h6">סה"כ לתשלום:</Typography>
                 <Typography variant="h6" color="primary">
-                  ₪{(calculatedPrice + (orderForm.deliveryMethod === 'shipping' ? 400 : 0)).toLocaleString()}
+                  ₪{Math.round(calculatedPrice + (orderForm.deliveryMethod === 'shipping' ? 400 : 0)).toLocaleString()}
                 </Typography>
               </Box>
             </Box>

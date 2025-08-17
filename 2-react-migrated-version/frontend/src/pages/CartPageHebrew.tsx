@@ -79,10 +79,10 @@ const CartPageHebrew: React.FC = () => {
                       secondary={
                         <Box>
                           <Typography variant="body2" color="text.secondary">
-                            מחיר יחידה: ₪{item.calculatedPrice}
+                            מחיר יחידה: ₪{Math.round(item.calculatedPrice)}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            סה"כ: ₪{(item.calculatedPrice * item.quantity).toFixed(2)}
+                            סה"כ: ₪{Math.round(item.calculatedPrice * item.quantity)}
                           </Typography>
                         </Box>
                       }
@@ -125,7 +125,7 @@ const CartPageHebrew: React.FC = () => {
           
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
             <Typography variant="h5" component="h2">
-              סך הכל: ₪{state.total.toFixed(2)}
+              סך הכל: ₪{Math.round(state.total)}
             </Typography>
             
             <Box sx={{ display: 'flex', gap: 2 }}>
