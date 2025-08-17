@@ -6,6 +6,8 @@ interface BackendProduct {
   _id?: string;
   id?: string;
   productId: string;
+  name?: any; // Can be string or object with language translations
+  description?: any; // Can be string or object with language translations
   basePrice: number;
   currency: string;
   dimensions: {
@@ -118,9 +120,9 @@ class BackendProductService {
       options: ['ללא צבע', 'דובדבן', 'אגוז', 'לבן', 'שחור', 'אלון', 'מייפל', 'ירוק', 'אפור']
     };
 
-    // Create Hebrew names from productId since backend doesn't have localized names
-    const productNames = this.getProductNames(backendProduct.productId);
-    const productDescriptions = this.getProductDescriptions(backendProduct.productId);
+    // Use backend name field if available, otherwise fallback to productId mapping
+    const productNames = this.getProductNames(backendProduct.productId, backendProduct.name);
+    const productDescriptions = this.getProductDescriptions(backendProduct.productId, backendProduct.description);
 
     return {
       id: backendProduct.id || '',
@@ -154,8 +156,25 @@ class BackendProductService {
     };
   }
 
-  // Helper function to get Hebrew/English names from productId
-  private getProductNames(productId: string): { he: string; en: string } {
+  // Helper function to get Hebrew/English names from backend data or productId fallback
+  private getProductNames(productId: string, backendName?: any): { he: string; en: string } {
+    // If backend provides structured name data, use it
+    if (backendName && typeof backendName === 'object') {
+      return {
+        he: backendName.he || backendName.Hebrew || '',
+        en: backendName.en || backendName.English || ''
+      };
+    }
+    
+    // If backend provides a simple string name, use it for Hebrew and try to create English
+    if (backendName && typeof backendName === 'string' && backendName.trim() !== '') {
+      return {
+        he: backendName.trim(),
+        en: backendName.trim() // For now, use same name for both languages
+      };
+    }
+    
+    // Fallback to hardcoded mapping for known productIds
     const nameMap: { [key: string]: { he: string; en: string } } = {
       'amsterdam-bookshelf': { he: 'ספרייה אמסטרדם', en: 'Amsterdam Bookshelf' },
       'venice-bookshelf': { he: 'ספרייה ונציה', en: 'Venice Bookshelf' },
@@ -166,11 +185,28 @@ class BackendProductService {
       'test-steps': { he: 'מדרגות מבחן', en: 'Test Steps' }
     };
     
-    return nameMap[productId] || { he: productId, en: productId };
+    return nameMap[productId] || { he: 'מוצר ללא שם', en: 'Unnamed Product' };
   }
 
-  // Helper function to get Hebrew/English descriptions from productId
-  private getProductDescriptions(productId: string): { he: string; en: string } {
+  // Helper function to get Hebrew/English descriptions from backend data or productId fallback
+  private getProductDescriptions(productId: string, backendDescription?: any): { he: string; en: string } {
+    // If backend provides structured description data, use it
+    if (backendDescription && typeof backendDescription === 'object') {
+      return {
+        he: backendDescription.he || backendDescription.Hebrew || '',
+        en: backendDescription.en || backendDescription.English || ''
+      };
+    }
+    
+    // If backend provides a simple string description, use it for Hebrew and try to create English
+    if (backendDescription && typeof backendDescription === 'string' && backendDescription.trim() !== '') {
+      return {
+        he: backendDescription.trim(),
+        en: backendDescription.trim() // For now, use same description for both languages
+      };
+    }
+    
+    // Fallback to hardcoded mapping for known productIds
     const descMap: { [key: string]: { he: string; en: string } } = {
       'amsterdam-bookshelf': { 
         he: 'ספרייה מודרנית עם קווים נקיים. התאימו גובה ורוחב כדי להתאים לחלל שלכם בצורה מושלמת.', 
