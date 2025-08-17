@@ -48,10 +48,10 @@ import backendProductService from '../services/backendProductService';
 interface AdminProduct {
   id?: string;
   productId: string;
-  name?: { he: string; en: string; es: string }; // Optional for display purposes
-  description?: { he: string; en: string; es: string }; // Optional for display purposes
-  shortDescription?: { he: string; en: string; es: string }; // Short description for homepage
-  fullDescription?: { he: string; en: string; es: string }; // Full description for product page
+  name?: { he: string }; // Hebrew only
+  description?: { he: string }; // Hebrew only
+  shortDescription?: { he: string }; // Short description for homepage - Hebrew only
+  fullDescription?: { he: string }; // Full description for product page - Hebrew only
   basePrice: number;
   currency: string;
   dimensions: {
@@ -142,14 +142,17 @@ const AdminProducts: React.FC = () => {
   const handleAddProduct = () => {
     const newProduct: AdminProduct = {
       productId: '',
-      name: { he: '', en: '', es: '' }, // Initialize name
-      description: { he: '', en: '', es: '' }, // Initialize description
+      name: { he: '' }, // Initialize name - Hebrew only
+      description: { he: '' }, // Initialize description - Hebrew only
+      shortDescription: { he: '' }, // Initialize short description - Hebrew only
+      fullDescription: { he: '' }, // Initialize full description - Hebrew only
       basePrice: 0,
       currency: 'NIS',
       dimensions: {
         width: { min: 10, max: 300, default: 50, multiplier: 1.0, step: 5, visible: true, editable: true },
         height: { min: 10, max: 300, default: 100, multiplier: 1.0, step: 5, visible: true, editable: true },
-        depth: { min: 10, max: 300, default: 30, multiplier: 1.0, step: 1, visible: true, editable: true }
+        depth: { min: 10, max: 300, default: 30, multiplier: 1.0, step: 1, visible: true, editable: true },
+        shelves: { min: 1, max: 10, default: 3, multiplier: 50, step: 1, visible: true, editable: true }
       },
       options: {
         lacquer: { available: true, price: 45 },
@@ -192,24 +195,24 @@ const AdminProducts: React.FC = () => {
   const handleSaveProduct = async () => {
     if (!editingProduct) return;
     
-    // Validate required translations
-    if (!editingProduct.name?.en || !editingProduct.name?.es) {
-      alert('נדרש שם בעברית, אנגלית וספרדית');
+    // Validate required Hebrew fields
+    if (!editingProduct.name?.he) {
+      alert('נדרש שם בעברית');
       return;
     }
     
-    if (!editingProduct.description?.en || !editingProduct.description?.es) {
-      alert('נדרש תיאור בעברית, אנגלית וספרדית');
+    if (!editingProduct.description?.he) {
+      alert('נדרש תיאור בעברית');
       return;
     }
     
-    if (!editingProduct.shortDescription?.en || !editingProduct.shortDescription?.es) {
-      alert('נדרש תיאור קצר בעברית, אנגלית וספרדית');
+    if (!editingProduct.shortDescription?.he) {
+      alert('נדרש תיאור קצר בעברית');
       return;
     }
     
-    if (!editingProduct.fullDescription?.en || !editingProduct.fullDescription?.es) {
-      alert('נדרש תיאור מלא בעברית, אנגלית וספרדית');
+    if (!editingProduct.fullDescription?.he) {
+      alert('נדרש תיאור מלא בעברית');
       return;
     }
     
@@ -276,6 +279,15 @@ const AdminProducts: React.FC = () => {
     });
   };
 
+  const handleRemoveAllImages = () => {
+    if (!editingProduct) return;
+    
+    setEditingProduct({
+      ...editingProduct,
+      images: []
+    });
+  };
+
   const handleSetPrimaryImage = (imageIndex: number) => {
     if (!editingProduct) return;
     
@@ -290,7 +302,7 @@ const AdminProducts: React.FC = () => {
     });
   };
 
-  const updateDimension = (dimension: 'width' | 'height' | 'depth', field: string, value: any) => {
+  const updateDimension = (dimension: 'width' | 'height' | 'depth' | 'shelves', field: string, value: any) => {
     if (!editingProduct) return;
     
     setEditingProduct({
@@ -366,12 +378,13 @@ const AdminProducts: React.FC = () => {
   };
 
   const calculateExamplePrice = (product: AdminProduct): number => {
-    const { width, height, depth } = product.dimensions || {};
+    const { width, height, depth, shelves } = product.dimensions || {};
     const widthCost = width ? (width.default - width.min) * width.multiplier : 0;
     const heightCost = height ? (height.default - height.min) * height.multiplier : 0;
     const depthCost = depth ? (depth.default - depth.min) * depth.multiplier : 0;
+    const shelvesCost = shelves ? (shelves.default - shelves.min) * shelves.multiplier : 0;
     
-    let totalPrice = product.basePrice + widthCost + heightCost + depthCost;
+    let totalPrice = product.basePrice + widthCost + heightCost + depthCost + shelvesCost;
     
     // Add color cost (40% increase) for example calculation - simplified for now
     totalPrice += totalPrice * 0.4;
@@ -461,65 +474,25 @@ const AdminProducts: React.FC = () => {
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                         <TextField
-                          sx={{ flex: '1 1 300px' }}
-                          label="שם המוצר (עברית)"
+                          fullWidth
+                          label="שם המוצר"
                           value={editingProduct.name?.he || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            name: { ...(editingProduct.name || { he: '', en: '', es: '' }), he: e.target.value }
-                          })}
-                        />
-                        <TextField
-                          sx={{ flex: '1 1 300px' }}
-                          label="שם המוצר (אנגלית)"
-                          value={editingProduct.name?.en || ''}
-                          onChange={(e) => setEditingProduct({
-                            ...editingProduct,
-                            name: { ...(editingProduct.name || { he: '', en: '', es: '' }), en: e.target.value }
-                          })}
-                        />
-                        <TextField
-                          sx={{ flex: '1 1 300px' }}
-                          label="שם המוצר (ספרדית)"
-                          value={editingProduct.name?.es || ''}
-                          onChange={(e) => setEditingProduct({
-                            ...editingProduct,
-                            name: { ...(editingProduct.name || { he: '', en: '', es: '' }), es: e.target.value }
+                            name: { he: e.target.value }
                           })}
                         />
                       </Box>
                       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                         <TextField
-                          sx={{ flex: '1 1 300px' }}
+                          fullWidth
                           multiline
                           rows={3}
-                          label="תיאור (עברית)"
+                          label="תיאור"
                           value={editingProduct.description?.he || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            description: { ...(editingProduct.description || { he: '', en: '', es: '' }), he: e.target.value }
-                          })}
-                        />
-                        <TextField
-                          sx={{ flex: '1 1 300px' }}
-                          multiline
-                          rows={3}
-                          label="תיאור (אנגלית)"
-                          value={editingProduct.description?.en || ''}
-                          onChange={(e) => setEditingProduct({
-                            ...editingProduct,
-                            description: { ...(editingProduct.description || { he: '', en: '', es: '' }), en: e.target.value }
-                          })}
-                        />
-                        <TextField
-                          sx={{ flex: '1 1 300px' }}
-                          multiline
-                          rows={3}
-                          label="תיאור (ספרדית)"
-                          value={editingProduct.description?.es || ''}
-                          onChange={(e) => setEditingProduct({
-                            ...editingProduct,
-                            description: { ...(editingProduct.description || { he: '', en: '', es: '' }), es: e.target.value }
+                            description: { he: e.target.value }
                           })}
                         />
                       </Box>
@@ -528,36 +501,14 @@ const AdminProducts: React.FC = () => {
                       <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>תיאור קצר (יוצג בעמוד הבית)</Typography>
                       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                         <TextField
-                          sx={{ flex: '1 1 300px' }}
+                          fullWidth
                           multiline
                           rows={2}
-                          label="תיאור קצר (עברית)"
+                          label="תיאור קצר"
                           value={editingProduct.shortDescription?.he || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            shortDescription: { ...(editingProduct.shortDescription || { he: '', en: '', es: '' }), he: e.target.value }
-                          })}
-                        />
-                        <TextField
-                          sx={{ flex: '1 1 300px' }}
-                          multiline
-                          rows={2}
-                          label="תיאור קצר (אנגלית)"
-                          value={editingProduct.shortDescription?.en || ''}
-                          onChange={(e) => setEditingProduct({
-                            ...editingProduct,
-                            shortDescription: { ...(editingProduct.shortDescription || { he: '', en: '', es: '' }), en: e.target.value }
-                          })}
-                        />
-                        <TextField
-                          sx={{ flex: '1 1 300px' }}
-                          multiline
-                          rows={2}
-                          label="תיאור קצר (ספרדית)"
-                          value={editingProduct.shortDescription?.es || ''}
-                          onChange={(e) => setEditingProduct({
-                            ...editingProduct,
-                            shortDescription: { ...(editingProduct.shortDescription || { he: '', en: '', es: '' }), es: e.target.value }
+                            shortDescription: { he: e.target.value }
                           })}
                         />
                       </Box>
@@ -566,36 +517,14 @@ const AdminProducts: React.FC = () => {
                       <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>תיאור מלא (יוצג בעמוד המוצר)</Typography>
                       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                         <TextField
-                          sx={{ flex: '1 1 300px' }}
+                          fullWidth
                           multiline
                           rows={4}
-                          label="תיאור מלא (עברית)"
+                          label="תיאור מלא"
                           value={editingProduct.fullDescription?.he || ''}
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
-                            fullDescription: { ...(editingProduct.fullDescription || { he: '', en: '', es: '' }), he: e.target.value }
-                          })}
-                        />
-                        <TextField
-                          sx={{ flex: '1 1 300px' }}
-                          multiline
-                          rows={4}
-                          label="תיאור מלא (אנגלית)"
-                          value={editingProduct.fullDescription?.en || ''}
-                          onChange={(e) => setEditingProduct({
-                            ...editingProduct,
-                            fullDescription: { ...(editingProduct.fullDescription || { he: '', en: '', es: '' }), en: e.target.value }
-                          })}
-                        />
-                        <TextField
-                          sx={{ flex: '1 1 300px' }}
-                          multiline
-                          rows={4}
-                          label="תיאור מלא (ספרדית)"
-                          value={editingProduct.fullDescription?.es || ''}
-                          onChange={(e) => setEditingProduct({
-                            ...editingProduct,
-                            fullDescription: { ...(editingProduct.fullDescription || { he: '', en: '', es: '' }), es: e.target.value }
+                            fullDescription: { he: e.target.value }
                           })}
                         />
                       </Box>
@@ -645,11 +574,11 @@ const AdminProducts: React.FC = () => {
                   <Box>
                     <Divider sx={{ my: 2 }} />
                     <Typography variant="h6" gutterBottom>הגדרות ממדים</Typography>
-                    {(['width', 'height', 'depth'] as const).map((dimension) => (
+                    {(['width', 'height', 'depth', 'shelves'] as const).map((dimension) => (
                       <Card key={dimension} sx={{ mb: 2 }}>
                         <CardContent>
                           <Typography variant="subtitle1" gutterBottom>
-                            {dimension === 'width' ? 'רוחב' : dimension === 'height' ? 'גובה' : 'עומק'} (ס"מ)
+                            {dimension === 'width' ? 'רוחב' : dimension === 'height' ? 'גובה' : dimension === 'depth' ? 'עומק' : 'כמות מדפים'} {dimension === 'shelves' ? '(יחידות)' : '(ס"מ)'}
                           </Typography>
                           
                           {/* Dimension Values */}
@@ -771,6 +700,16 @@ const AdminProducts: React.FC = () => {
                         >
                           הוסף תמונה
                         </Button>
+                        {editingProduct.images.length > 0 && (
+                          <Button 
+                            variant="outlined" 
+                            color="error"
+                            onClick={handleRemoveAllImages}
+                            sx={{ minWidth: '120px' }}
+                          >
+                            מחק הכל
+                          </Button>
+                        )}
                       </Box>
                       <Typography variant="caption" color="text.secondary" display="block">
                         הזן קישור לתמונה מהאינטרנט. ניתן להוסיף מספר תמונות. התמונה הראשונה תהיה התמונה הראשית.
