@@ -42,9 +42,9 @@ const dimensionSchema = new mongoose.Schema({
 }, { _id: false });
 
 const translationSchema = new mongoose.Schema({
-  en: { type: String, required: true },
+  en: { type: String, required: false, default: '' },
   he: { type: String, required: true },
-  es: { type: String, required: true }
+  es: { type: String, required: false, default: '' }
 }, { _id: false });
 
 const productSchema = new mongoose.Schema({
