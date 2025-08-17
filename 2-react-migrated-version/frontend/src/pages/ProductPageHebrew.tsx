@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -32,6 +32,24 @@ import { ArrowBack } from '@mui/icons-material';
 import backendProductService, { ClientProduct } from '../services/backendProductService';
 import { useCart, CartItem } from '../context/CartContext';
 import Navigation from '../components/Navigation';
+import ReviewSystem from '../components/ReviewSystem';
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 const ProductPageHebrew: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -101,6 +119,10 @@ const ProductPageHebrew: React.FC = () => {
     fetchProduct();
   }, [productId]);
 
+  // Debounce dimensions and color changes to reduce API calls
+  const debouncedDimensions = useDebounce(dimensions, 800); // 800ms delay
+  const debouncedSelectedColor = useDebounce(selectedColor, 500); // 500ms delay
+
   useEffect(() => {
     if (!product) return;
 
@@ -108,12 +130,12 @@ const ProductPageHebrew: React.FC = () => {
       try {
         setCalculatingPrice(true);
         const customizations = {
-          length: dimensions.length,
-          width: dimensions.width,
-          height: dimensions.height,
-          depth: dimensions.depth,
-          steps: dimensions.steps,
-          color: selectedColor
+          length: debouncedDimensions.length,
+          width: debouncedDimensions.width,
+          height: debouncedDimensions.height,
+          depth: debouncedDimensions.depth,
+          steps: debouncedDimensions.steps,
+          color: debouncedSelectedColor
         };
         const totalPrice = await backendProductService.calculatePrice(product.productId, customizations);
         setCalculatedPrice(totalPrice);
@@ -126,7 +148,7 @@ const ProductPageHebrew: React.FC = () => {
     };
 
     calculatePrice();
-  }, [product, dimensions, selectedColor]);
+  }, [product, debouncedDimensions, debouncedSelectedColor]);
 
   const handleDimensionChange = (key: string, value: number) => {
     setDimensions(prev => ({ ...prev, [key]: value }));
@@ -428,6 +450,12 @@ const ProductPageHebrew: React.FC = () => {
             </Button>
           </Box>
         </Box>
+
+        {/* Review System */}
+        <ReviewSystem 
+          productId={product.productId} 
+          productName={product.name.he} 
+        />
       </Container>
       
       <Snackbar

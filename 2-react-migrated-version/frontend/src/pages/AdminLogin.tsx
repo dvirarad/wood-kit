@@ -90,11 +90,6 @@ const AdminLogin: React.FC = () => {
               התחבר
             </Button>
             
-            <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-              <Typography variant="caption" color="text.secondary">
-                לצורכי הדגמה: שם משתמש: admin, סיסמה: admin123
-              </Typography>
-            </Box>
           </Box>
         </Paper>
       </Container>
