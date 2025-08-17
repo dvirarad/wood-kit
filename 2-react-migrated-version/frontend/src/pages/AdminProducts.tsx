@@ -237,11 +237,19 @@ const AdminProducts: React.FC = () => {
     }
     
     try {
-      // Prepare data for backend - Hebrew only
+      // Prepare data for backend - ensure object format for multilingual fields
       const backendData = {
         ...editingProduct,
-        name: editingProduct.name?.he || '',
-        description: editingProduct.description?.he || '',
+        name: {
+          he: editingProduct.name?.he || '',
+          en: '', // Empty for Hebrew-only interface
+          es: ''  // Empty for Hebrew-only interface
+        },
+        description: {
+          he: editingProduct.description?.he || '',
+          en: '', // Empty for Hebrew-only interface
+          es: ''  // Empty for Hebrew-only interface
+        },
         shortDescription: editingProduct.shortDescription?.he || '',
         fullDescription: editingProduct.fullDescription?.he || ''
       };
