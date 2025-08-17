@@ -56,7 +56,8 @@
       "Bash(timeout:*)",
       "Bash(gtimeout:*)",
       "Bash(git checkout:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "WebFetch(domain:api.github.com)"
     ],
     "deny": []
   }
