@@ -46,6 +46,14 @@ jobs:
         cd 2-react-migrated-version/frontend
         npm ci
 
+    - name: Install Cypress dependencies
+      run: |
+        cd 2-react-migrated-version/frontend
+        # Install Cypress binary if not cached
+        npx cypress install
+        # Verify Cypress can run
+        npx cypress verify
+
     - name: Build frontend
       run: |
         cd 2-react-migrated-version/frontend
@@ -78,28 +86,65 @@ jobs:
     - name: Start frontend server
       run: |
         cd 2-react-migrated-version/frontend
+        echo "Starting frontend server..."
         npx serve -s build -p 3000 --no-clipboard &
         echo $! > ../../frontend.pid
         
-        # Wait for frontend to be ready
-        echo "Waiting for frontend..."
-        for i in {1..20}; do
+        # Wait for frontend to be ready with more debugging
+        echo "Waiting for frontend server..."
+        for i in {1..30}; do
           if curl -sf http://localhost:3000 > /dev/null 2>&1; then
             echo "✅ Frontend is ready!"
+            echo "Frontend response:"
+            curl -s http://localhost:3000 | head -20
             break
           fi
-          echo "Waiting... (attempt $i/20)"
-          sleep 2
+          echo "Waiting... (attempt $i/30)"
+          if [ $i -eq 15 ]; then
+            echo "Debug: Checking if frontend process is running..."
+            ps aux | grep serve || true
+            echo "Debug: Checking port 3000..."
+            netstat -tlnp | grep 3000 || true
+            echo "Debug: Checking build directory..."
+            ls -la build/ || echo "Build directory not found"
+          fi
+          sleep 3
         done
+        
+        # Final check
+        echo "Final frontend health check..."
+        curl -v http://localhost:3000 || echo "Frontend health check failed"
+
+    - name: Pre-test debugging
+      run: |
+        echo "=== Pre-test System Check ==="
+        echo "Frontend server status:"
+        curl -I http://localhost:3000 || echo "Frontend not responding"
+        echo ""
+        echo "Backend server status:"  
+        curl -I http://localhost:6003/health || echo "Backend not responding"
+        echo ""
+        echo "Process list:"
+        ps aux | grep -E "(serve|node)" || echo "No relevant processes found"
+        echo ""
 
     - name: Run Cypress smoke tests
       run: |
         cd 2-react-migrated-version/frontend
         echo "Running Cypress smoke tests..."
-        npx cypress run --spec "cypress/e2e/basic-smoke-test.cy.ts" --browser chrome --headless
+        echo "Cypress baseUrl: http://localhost:3000"
+        echo "Checking if Cypress can reach the frontend..."
+        curl -f http://localhost:3000 || { echo "Cannot reach frontend before Cypress"; exit 1; }
+        
+        echo "Starting ultra-simple Cypress test first..."
+        npx cypress run --spec "cypress/e2e/ultra-simple-test.cy.ts" --browser chrome --headless --config video=true,screenshotOnRunFailure=true
+        
+        echo "Now running basic smoke tests..."
+        npx cypress run --spec "cypress/e2e/basic-smoke-test.cy.ts" --browser chrome --headless --config video=true,screenshotOnRunFailure=true
       env:
         CI: true
         CYPRESS_baseUrl: http://localhost:3000
+        DEBUG: cypress:*
 
     - name: Run Cypress admin tests
       continue-on-error: true
