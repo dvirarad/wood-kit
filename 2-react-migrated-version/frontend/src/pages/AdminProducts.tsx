@@ -50,6 +50,8 @@ interface AdminProduct {
   productId: string;
   name?: { he: string; en: string; es: string }; // Optional for display purposes
   description?: { he: string; en: string; es: string }; // Optional for display purposes
+  shortDescription?: { he: string; en: string; es: string }; // Short description for homepage
+  fullDescription?: { he: string; en: string; es: string }; // Full description for product page
   basePrice: number;
   currency: string;
   dimensions: {
