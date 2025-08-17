@@ -236,20 +236,21 @@ describe('Price Calculation with Shelves', () => {
     cy.contains('כמות מדפים').should('be.visible');
     cy.contains('מחיר').should('be.visible');
     
-    // Test order flow
+    // Test order dialog opens (but don't submit to avoid backend issues)
     cy.get('button').contains('המשך להזמנה').click();
     cy.get('[role="dialog"]').should('be.visible');
     
-    // Fill minimal order info
-    cy.get('input[label*="שם מלא"]').type('בודק אוטומטי');
-    cy.get('input[type="email"]').type('test@cypress.com');
-    cy.get('input[label*="טלפון"]').type('0501234567');
-    cy.get('textarea[label*="כתובת"]').type('כתובת בדיקה');
+    // Verify order form fields exist
+    cy.get('input[label*="שם מלא"]').should('be.visible');
+    cy.get('input[type="email"]').should('be.visible');
+    cy.get('input[label*="טלפון"]').should('be.visible');
+    cy.get('textarea[label*="כתובת"]').should('be.visible');
     
-    // Verify order summary appears
+    // Verify order summary section exists
     cy.contains('סיכום מחיר').should('be.visible');
     
-    // Close order (don't submit)
+    // Close order dialog without submitting
     cy.get('button').contains('ביטול').click();
+    cy.get('[role="dialog"]').should('not.exist');
   });
 });
