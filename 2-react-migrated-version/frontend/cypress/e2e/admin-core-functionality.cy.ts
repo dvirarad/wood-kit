@@ -13,18 +13,18 @@ describe('Core Admin Product Management', () => {
   };
 
   beforeEach(() => {
-    // Login to admin
-    cy.visit('/admin/login');
-    cy.get('input[type="email"]', { timeout: 10000 }).type('admin@woodkits.com');
-    cy.get('input[type="password"]').type('admin123');
+    // Login to admin with longer timeouts for CI
+    cy.visit('/admin/login', { timeout: 30000 });
+    cy.get('input[type="email"]', { timeout: 20000 }).should('be.visible').type('admin@woodkits.com');
+    cy.get('input[type="password"]').should('be.visible').type('admin123');
     cy.get('button[type="submit"]').click();
-    cy.url().should('include', '/admin/products', { timeout: 15000 });
+    cy.url().should('include', '/admin/products', { timeout: 30000 });
   });
 
   it('Should successfully create and save a Hebrew product with shelves', () => {
     // Open add product dialog
-    cy.get('button').contains('הוסף מוצר חדש').click();
-    cy.get('[role="dialog"]', { timeout: 10000 }).should('be.visible');
+    cy.get('button').contains('הוסף מוצר חדש', { timeout: 15000 }).should('be.visible').click();
+    cy.get('[role="dialog"]', { timeout: 15000 }).should('be.visible');
     
     // Fill product details
     cy.get('input').first().clear().type(testProduct.name);
