@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
 
     // Get products with pagination
     const products = await Product.find(query)
-      .sort(sort)
+      .sort({ [sort]: 1 })
       .skip(skip)
       .limit(parseInt(limit))
       .lean();
@@ -39,13 +39,15 @@ router.get('/', async (req, res) => {
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / parseInt(limit));
 
-    // Localize products
+    // Localize products - return full object structure for frontend compatibility
     const localizedProducts = products.map(product => {
       const localized = {
         id: product._id,
         productId: product.productId,
-        name: product.name[language] || product.name.en,
-        description: product.description[language] || product.description.en,
+        name: product.name, // Return full object structure
+        description: product.description, // Return full object structure
+        shortDescription: product.shortDescription, // Include short description
+        fullDescription: product.fullDescription, // Include full description
         basePrice: product.basePrice,
         currency: product.currency,
         dimensions: product.dimensions,
@@ -109,12 +111,14 @@ router.get('/:id', async (req, res) => {
     // Allow direct access to inactive products (for existing orders, etc.)
     // The public listing already filters by isActive: true
 
-    // Localize product
+    // Return product with full object structure for frontend compatibility
     const localizedProduct = {
       id: product._id,
       productId: product.productId,
-      name: product.name[language] || product.name.en,
-      description: product.description[language] || product.description.en,
+      name: product.name, // Return full object structure
+      description: product.description, // Return full object structure
+      shortDescription: product.shortDescription, // Include short description
+      fullDescription: product.fullDescription, // Include full description
       basePrice: product.basePrice,
       currency: product.currency,
       dimensions: product.dimensions,
