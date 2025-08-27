@@ -127,8 +127,15 @@ class BackendProductService {
     // Use backend name field if available, otherwise fallback to productId mapping
     const productNames = this.getProductNames(backendProduct.productId, backendProduct.name);
     const productDescriptions = this.getProductDescriptions(backendProduct.productId, backendProduct.description);
-    const productShortDescriptions = this.getProductDescriptions(backendProduct.productId, backendProduct.shortDescription);
-    const productFullDescriptions = this.getProductDescriptions(backendProduct.productId, backendProduct.fullDescription);
+    
+    // For missing shortDescription/fullDescription, fallback to main description
+    const productShortDescriptions = backendProduct.shortDescription ? 
+      this.getProductDescriptions(backendProduct.productId, backendProduct.shortDescription) : 
+      productDescriptions; // Fallback to main description
+    
+    const productFullDescriptions = backendProduct.fullDescription ? 
+      this.getProductDescriptions(backendProduct.productId, backendProduct.fullDescription) : 
+      productDescriptions; // Fallback to main description
 
     return {
       id: backendProduct.id || '',
@@ -287,8 +294,12 @@ class BackendProductService {
       
       const convertedProducts = response.data.map((product, index) => {
         console.log(`Converting product ${index}:`, product);
+        console.log(`Product ${index} shortDescription:`, product.shortDescription);
+        console.log(`Product ${index} fullDescription:`, product.fullDescription);
         const converted = this.toClientProduct(product);
         console.log(`Converted product ${index}:`, converted);
+        console.log(`Converted ${index} shortDescription:`, converted.shortDescription);
+        console.log(`Converted ${index} fullDescription:`, converted.fullDescription);
         return converted;
       });
       

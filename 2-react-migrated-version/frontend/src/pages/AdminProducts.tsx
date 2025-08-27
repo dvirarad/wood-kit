@@ -135,10 +135,14 @@ const AdminProducts: React.FC = () => {
               product.name?.he ? { he: product.name.he } : { he: '' },
         description: typeof product.description === 'string' ? { he: product.description } : 
                     product.description?.he ? { he: product.description.he } : { he: '' },
-        shortDescription: typeof product.shortDescription === 'string' ? { he: product.shortDescription } : 
-                         product.shortDescription?.he ? { he: product.shortDescription.he } : { he: '' },
-        fullDescription: typeof product.fullDescription === 'string' ? { he: product.fullDescription } : 
-                        product.fullDescription?.he ? { he: product.fullDescription.he } : { he: '' }
+        shortDescription: product.shortDescription ? 
+                         (typeof product.shortDescription === 'string' ? { he: product.shortDescription } : 
+                          product.shortDescription?.he ? { he: product.shortDescription.he } : { he: '' }) : 
+                         { he: product.description?.he || product.description || '' }, // Fallback to main description
+        fullDescription: product.fullDescription ? 
+                        (typeof product.fullDescription === 'string' ? { he: product.fullDescription } : 
+                         product.fullDescription?.he ? { he: product.fullDescription.he } : { he: '' }) : 
+                        { he: product.description?.he || product.description || '' } // Fallback to main description
       }));
       setProducts(convertedProducts);
     } catch (error) {
@@ -199,13 +203,15 @@ const AdminProducts: React.FC = () => {
   };
 
   const handleEditProduct = (product: AdminProduct) => {
-    // Ensure all text fields have proper Hebrew structure
+    // Ensure all text fields have proper Hebrew structure with intelligent fallbacks
     const editableProduct = {
       ...product,
       name: product.name?.he ? { he: product.name.he } : { he: '' },
       description: product.description?.he ? { he: product.description.he } : { he: '' },
-      shortDescription: product.shortDescription?.he ? { he: product.shortDescription.he } : { he: '' },
-      fullDescription: product.fullDescription?.he ? { he: product.fullDescription.he } : { he: '' }
+      shortDescription: product.shortDescription?.he ? { he: product.shortDescription.he } : 
+                       { he: product.description?.he || '' }, // Fallback to main description
+      fullDescription: product.fullDescription?.he ? { he: product.fullDescription.he } : 
+                      { he: product.description?.he || '' } // Fallback to main description
     };
     setEditingProduct(editableProduct);
     resetImageForm();
@@ -226,15 +232,16 @@ const AdminProducts: React.FC = () => {
       return;
     }
     
-    if (!editingProduct.shortDescription?.he) {
-      alert('נדרש תיאור קצר בעברית');
-      return;
-    }
+    // Short and full descriptions are optional - if empty, they'll fallback to main description
+    // if (!editingProduct.shortDescription?.he) {
+    //   alert('נדרש תיאור קצר בעברית');
+    //   return;
+    // }
     
-    if (!editingProduct.fullDescription?.he) {
-      alert('נדרש תיאור מלא בעברית');
-      return;
-    }
+    // if (!editingProduct.fullDescription?.he) {
+    //   alert('נדרש תיאור מלא בעברית');
+    //   return;
+    // }
     
     try {
       // Prepare data for backend - ensure object format for multilingual fields

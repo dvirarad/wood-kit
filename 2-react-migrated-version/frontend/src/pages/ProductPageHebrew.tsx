@@ -315,14 +315,14 @@ const ProductPageHebrew: React.FC = () => {
               </Box>
             )}
             
-            {/* Full Description under image */}
-            {product.fullDescription?.he && (
+            {/* Full Description under image - show fullDescription if exists, otherwise fallback to regular description */}
+            {(product.fullDescription?.he || product.description?.he) && (
               <Box sx={{ mt: 3, p: 3, bgcolor: 'grey.50', borderRadius: 2 }}>
                 <Typography variant="h6" gutterBottom>
                   תיאור המוצר
                 </Typography>
                 <Typography variant="body1" sx={{ whiteSpace: 'pre-line', lineHeight: 1.6 }}>
-                  {product.fullDescription.he}
+                  {product.fullDescription?.he || product.description?.he}
                 </Typography>
               </Box>
             )}
