@@ -172,7 +172,7 @@ describe('BackendProductService', () => {
 
       api.get.mockResolvedValue(backendResponseMissingDimensions);
 
-      const products = await backendProductService.getProducts();
+      const products = await backendProductService.getClientProducts();
 
       expect(products).toHaveLength(1);
       const product = products[0];
@@ -208,7 +208,7 @@ describe('BackendProductService', () => {
 
       api.get.mockResolvedValue(backendResponseNoDimensions);
 
-      const products = await backendProductService.getProducts();
+      const products = await backendProductService.getClientProducts();
 
       expect(products).toHaveLength(1);
       const product = products[0];
@@ -248,10 +248,10 @@ describe('BackendProductService', () => {
 
       // Should not throw an error
       expect(async () => {
-        await backendProductService.getProducts();
+        await backendProductService.getClientProducts();
       }).not.toThrow();
 
-      const products = await backendProductService.getProducts();
+      const products = await backendProductService.getClientProducts();
       expect(products).toHaveLength(1);
     });
   });
@@ -327,7 +327,7 @@ describe('BackendProductService', () => {
     test('should handle API errors gracefully', async () => {
       api.get.mockRejectedValue(new Error('API Error'));
 
-      await expect(backendProductService.getProducts()).rejects.toThrow('API Error');
+      await expect(backendProductService.getClientProducts()).rejects.toThrow('API Error');
       
       // Ensure it doesn't crash the application
       expect(api.get).toHaveBeenCalled();
@@ -343,7 +343,7 @@ describe('BackendProductService', () => {
 
       api.get.mockResolvedValue(malformedResponse);
 
-      await expect(backendProductService.getProducts()).rejects.toThrow();
+      await expect(backendProductService.getClientProducts()).rejects.toThrow();
     });
   });
 });

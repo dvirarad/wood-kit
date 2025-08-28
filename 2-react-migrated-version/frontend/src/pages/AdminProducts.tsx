@@ -53,6 +53,7 @@ interface AdminProduct {
   shortDescription?: { he: string }; // Short description for homepage - Hebrew only
   fullDescription?: { he: string }; // Full description for product page - Hebrew only
   basePrice: number;
+  minimumPrice: number;
   currency: string;
   dimensions: {
     [key: string]: {
@@ -163,6 +164,7 @@ const AdminProducts: React.FC = () => {
       shortDescription: { he: '' }, // Initialize short description - Hebrew only
       fullDescription: { he: '' }, // Initialize full description - Hebrew only
       basePrice: 0,
+      minimumPrice: 199,
       currency: 'NIS',
       dimensions: {
         width: { min: 10, max: 300, default: 50, multiplier: 1.0, step: 5, visible: true, editable: true },
@@ -598,6 +600,16 @@ const AdminProducts: React.FC = () => {
                           onChange={(e) => setEditingProduct({
                             ...editingProduct,
                             basePrice: Number(e.target.value)
+                          })}
+                        />
+                        <TextField
+                          sx={{ flex: 1 }}
+                          type="number"
+                          label="מחיר מינימלי (₪)"
+                          value={editingProduct.minimumPrice}
+                          onChange={(e) => setEditingProduct({
+                            ...editingProduct,
+                            minimumPrice: Number(e.target.value)
                           })}
                         />
                         <TextField

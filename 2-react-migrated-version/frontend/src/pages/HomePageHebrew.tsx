@@ -155,7 +155,7 @@ const HomePageHebrew: React.FC = () => {
                 </Box>
 
                 <Typography variant="h6" color="primary" sx={{ mb: 1 }}>
-                  החל מ-₪{product.basePrice}
+                  החל מ-₪{product.minimumPrice || product.basePrice}
                 </Typography>
 
                 <Chip 

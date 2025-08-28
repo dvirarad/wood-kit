@@ -11,6 +11,7 @@ interface BackendProduct {
   shortDescription?: any; // Can be string or object with language translations
   fullDescription?: any; // Can be string or object with language translations
   basePrice: number;
+  minimumPrice?: number;
   currency: string;
   dimensions: {
     [key: string]: {
@@ -59,6 +60,7 @@ export interface ClientProduct {
   fullDescription: { he: string };
   category: string;
   basePrice: number;
+  minimumPrice?: number;
   images: Array<{ url: string; isPrimary: boolean }>;
   inventory: {
     inStock: boolean;
@@ -146,6 +148,7 @@ class BackendProductService {
       fullDescription: productFullDescriptions,
       category: backendProduct.category || '',
       basePrice: backendProduct.basePrice || 0,
+      minimumPrice: backendProduct.minimumPrice || backendProduct.basePrice || 0,
       images: (backendProduct.images || [])
         .map(img => ({
           url: img?.url || '',
