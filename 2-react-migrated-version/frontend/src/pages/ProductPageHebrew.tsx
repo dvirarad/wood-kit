@@ -192,8 +192,12 @@ const ProductPageHebrew: React.FC = () => {
         language: 'he'
       };
       
-      // Send to backend API
-      const response = await fetch('/api/v1/orders', {
+      // Send to backend API using the configured API service
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 
+        (process.env.NODE_ENV === 'production' 
+          ? 'https://wood-kit-production.up.railway.app/api/v1' 
+          : 'http://localhost:6003/api/v1');
+      const response = await fetch(`${API_BASE_URL}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

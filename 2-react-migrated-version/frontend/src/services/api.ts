@@ -1,4 +1,7 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:6003/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? 'https://wood-kit-production.up.railway.app/api/v1' 
+    : 'http://localhost:6003/api/v1');
 
 class ApiService {
   private baseUrl: string;
