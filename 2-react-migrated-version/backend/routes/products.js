@@ -170,7 +170,7 @@ router.post('/:id/calculate-price', async (req, res) => {
 
     // Calculate pricing
     const pricing = Product.calculatePrice(
-      product.basePrice,
+      product.minimumPrice,
       product.dimensions,
       selectedDimensions,
       options,

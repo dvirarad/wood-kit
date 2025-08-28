@@ -62,6 +62,12 @@ const productSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  minimumPrice: {
+    type: Number,
+    required: true,
+    default: 199,
+    min: 0
+  },
   currency: {
     type: String,
     default: 'NIS',
@@ -175,8 +181,8 @@ productSchema.pre('save', function(next) {
 });
 
 // Static method to calculate price
-productSchema.statics.calculatePrice = function(basePrice, dimensions, selectedDimensions, options = {}, colorOptions = {}, selectedColor = null) {
-  let totalPrice = basePrice;
+productSchema.statics.calculatePrice = function(minimumPrice, dimensions, selectedDimensions, options = {}, colorOptions = {}, selectedColor = null) {
+  let totalPrice = minimumPrice;
 
   // Calculate size adjustments
   let sizeAdjustment = 0;
@@ -220,7 +226,7 @@ productSchema.statics.calculatePrice = function(basePrice, dimensions, selectedD
   totalPrice += optionsCost + colorCost;
 
   return {
-    basePrice,
+    minimumPrice,
     sizeAdjustment: Math.round(sizeAdjustment * 100) / 100,
     optionsCost: Math.round(optionsCost * 100) / 100,
     colorCost: Math.round(colorCost * 100) / 100,

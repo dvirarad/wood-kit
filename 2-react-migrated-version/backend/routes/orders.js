@@ -193,7 +193,7 @@ router.post('/', async (req, res) => {
       // Send emails
       const messages = [
         {
-          to: process.env.SENDGRID_TO_EMAIL || 'orders@woodkits.com',
+          to: process.env.SENDGRID_TO_EMAIL || 'dvirarad@gmail.com',
           from: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
           subject: `🪵 הזמנה חדשה #${orderId} - ${productName}`,
           html: adminEmailHtml
