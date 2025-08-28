@@ -681,6 +681,13 @@ router.post('/products', async (req, res) => {
     }
     
     const fullyCleanData = removeAllIds(cleanData);
+    
+    // Add backward compatibility for minimumPrice
+    if (!fullyCleanData.minimumPrice && fullyCleanData.basePrice) {
+      fullyCleanData.minimumPrice = Math.round(fullyCleanData.basePrice * 0.8);
+      console.log(`Added minimumPrice: ${fullyCleanData.minimumPrice} (80% of basePrice: ${fullyCleanData.basePrice})`);
+    }
+    
     console.log('Creating product with fully clean data:', JSON.stringify(fullyCleanData, null, 2));
     const product = new Product(fullyCleanData);
     await product.save();
@@ -751,6 +758,13 @@ router.put('/products/:id', async (req, res) => {
     }
     
     const fullyCleanData = removeAllIds(cleanData);
+    
+    // Add backward compatibility for minimumPrice  
+    if (!fullyCleanData.minimumPrice && fullyCleanData.basePrice) {
+      fullyCleanData.minimumPrice = Math.round(fullyCleanData.basePrice * 0.8);
+      console.log(`UPDATE - Added minimumPrice: ${fullyCleanData.minimumPrice} (80% of basePrice: ${fullyCleanData.basePrice})`);
+    }
+    
     console.log('UPDATE - Clean data for update:', JSON.stringify(fullyCleanData, null, 2));
 
     const product = await Product.findByIdAndUpdate(
