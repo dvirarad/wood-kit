@@ -159,6 +159,7 @@ describe('Product Dimensions API Validation', () => {
         name: { he: 'בדיקת מחשבון מחיר', en: 'Price Calculator Test', es: 'Prueba de Calculadora de Precios' },
         description: { he: 'תיאור', en: 'Description', es: 'Descripción' },
         basePrice: 200,
+        minimumPrice: 160, // Explicitly set for test
         dimensions: {
           width: { min: 50, max: 100, default: 75, multiplier: 0.5 },
           height: { min: 80, max: 200, default: 150, multiplier: 0.3 },
@@ -197,7 +198,7 @@ describe('Product Dimensions API Validation', () => {
       expect(response.body.data.pricing).toBeDefined();
       
       const pricing = response.body.data.pricing;
-      expect(pricing.basePrice).toBe(200);
+      expect(pricing.minimumPrice).toBe(160); // 80% of basePrice 200
       
       // Expected calculations:
       // Width: (80 - 75) * 0.5 = 2.5
@@ -205,7 +206,7 @@ describe('Product Dimensions API Validation', () => {
       // Depth: (40 - 35) * 0.2 = 1
       // Total adjustment: 2.5 + 3 + 1 = 6.5
       expect(pricing.sizeAdjustment).toBe(6.5);
-      expect(pricing.totalPrice).toBe(206.5);
+      expect(pricing.totalPrice).toBe(166.5); // minimumPrice 160 + adjustment 6.5
     });
 
     test('should handle missing dimensions in price calculation', async () => {
@@ -227,7 +228,7 @@ describe('Product Dimensions API Validation', () => {
       
       // Should not crash and should calculate based on available dimensions
       const pricing = response.body.data.pricing;
-      expect(pricing.totalPrice).toBeGreaterThan(200); // Base price + adjustments
+      expect(pricing.totalPrice).toBeGreaterThan(160); // minimumPrice + adjustments
     });
 
     test('should reject price calculation with old length dimension', async () => {

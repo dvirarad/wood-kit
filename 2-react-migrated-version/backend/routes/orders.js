@@ -5,6 +5,94 @@ const sgMail = require('@sendgrid/mail');
 // Initialize SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+// @desc    Test email sending functionality
+// @route   POST /api/v1/orders/test-email
+// @access  Public (for debugging)
+router.post('/test-email', async (req, res) => {
+  try {
+    console.log('🧪 Testing email functionality...');
+    
+    // Check environment variables
+    const config = {
+      hasApiKey: !!process.env.SENDGRID_API_KEY,
+      apiKeyLength: process.env.SENDGRID_API_KEY ? process.env.SENDGRID_API_KEY.length : 0,
+      fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
+      toEmail: process.env.SENDGRID_TO_EMAIL || 'dvirarad@gmail.com'
+    };
+    
+    console.log('📋 Email Configuration:', config);
+    
+    if (!config.hasApiKey) {
+      return res.status(400).json({
+        success: false,
+        message: 'SendGrid API key not configured',
+        config: config
+      });
+    }
+    
+    // Test email
+    const testMessage = {
+      to: config.toEmail,
+      from: config.fromEmail,
+      subject: '🧪 Wood Kits - Email Test',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2c3e50;">🧪 Email Test Successful!</h2>
+          <p>This is a test email from Wood Kits backend.</p>
+          <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+          <p><strong>Configuration:</strong></p>
+          <ul>
+            <li>API Key: ${config.hasApiKey ? '✅ Set' : '❌ Missing'}</li>
+            <li>From Email: ${config.fromEmail}</li>
+            <li>To Email: ${config.toEmail}</li>
+          </ul>
+          <p>If you received this email, SendGrid is working correctly! 🎉</p>
+        </div>
+      `
+    };
+    
+    console.log('📧 Sending test email:', {
+      to: testMessage.to,
+      from: testMessage.from,
+      subject: testMessage.subject
+    });
+    
+    await sgMail.send(testMessage);
+    console.log('✅ Test email sent successfully!');
+    
+    res.json({
+      success: true,
+      message: 'Test email sent successfully',
+      config: config,
+      sentTo: testMessage.to
+    });
+    
+  } catch (error) {
+    console.log('❌ Test email failed:', error);
+    
+    let errorDetails = {
+      message: error.message,
+      code: error.code
+    };
+    
+    if (error.response) {
+      errorDetails.status = error.response.status;
+      errorDetails.body = error.response.body;
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Test email failed',
+      error: errorDetails,
+      config: {
+        hasApiKey: !!process.env.SENDGRID_API_KEY,
+        fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
+        toEmail: process.env.SENDGRID_TO_EMAIL || 'dvirarad@gmail.com'
+      }
+    });
+  }
+});
+
 // @desc    Submit new order
 // @route   POST /api/v1/orders
 // @access  Public
