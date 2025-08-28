@@ -188,6 +188,12 @@ router.post('/', async (req, res) => {
       </div>
     `;
 
+    // Check SendGrid configuration
+    console.log('📧 Email configuration check:');
+    console.log('- SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? 'SET' : 'MISSING');
+    console.log('- SENDGRID_FROM_EMAIL:', process.env.SENDGRID_FROM_EMAIL || 'USING DEFAULT');
+    console.log('- SENDGRID_TO_EMAIL:', process.env.SENDGRID_TO_EMAIL || 'USING DEFAULT');
+
     // For testing - log order details instead of sending emails if SendGrid fails
     try {
       // Send emails
@@ -206,14 +212,28 @@ router.post('/', async (req, res) => {
         }
       ];
 
+      console.log('📨 Attempting to send emails:', {
+        adminEmail: messages[0].to,
+        customerEmail: messages[1].to,
+        fromEmail: messages[0].from
+      });
+
       await sgMail.send(messages);
       console.log('✅ Order emails sent successfully via SendGrid');
     } catch (emailError) {
-      console.log('⚠️ Email sending failed, logging order details instead:');
-      console.log('Order ID:', orderId);
-      console.log('Customer:', customer);
-      console.log('Product:', productName);
-      console.log('Final Price: ₪' + finalPrice);
+      console.log('❌ Email sending failed:', emailError);
+      console.log('⚠️ Email error details:');
+      if (emailError.response) {
+        console.log('- Status:', emailError.response.status);
+        console.log('- Body:', emailError.response.body);
+      }
+      console.log('- Message:', emailError.message);
+      
+      console.log('📝 Order details (email failed):');
+      console.log('- Order ID:', orderId);
+      console.log('- Customer:', customer.email);
+      console.log('- Product:', productName);
+      console.log('- Final Price: ₪' + finalPrice);
       // Continue with success response even if email fails
     }
 
