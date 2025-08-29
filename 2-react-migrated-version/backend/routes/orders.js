@@ -5,6 +5,64 @@ const sgMail = require('@sendgrid/mail');
 // Initialize SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+// @desc    Check SendGrid configuration status
+// @route   GET /api/v1/orders/email-status
+// @access  Public (for debugging)
+router.get('/email-status', async (req, res) => {
+  try {
+    const config = {
+      hasApiKey: !!process.env.SENDGRID_API_KEY,
+      apiKeyLength: process.env.SENDGRID_API_KEY ? process.env.SENDGRID_API_KEY.length : 0,
+      fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
+      toEmail: process.env.SENDGRID_TO_EMAIL || 'dvirarad@gmail.com'
+    };
+
+    let status = 'healthy';
+    let issues = [];
+    let statusCode = 200;
+
+    // Check for configuration issues
+    if (!config.hasApiKey) {
+      status = 'unhealthy';
+      issues.push('SendGrid API key not configured');
+      statusCode = 503; // Service unavailable
+    }
+
+    if (config.apiKeyLength > 0 && config.apiKeyLength < 20) {
+      status = 'warning';
+      issues.push('SendGrid API key appears to be invalid (too short)');
+      statusCode = 503;
+    }
+
+    if (!config.fromEmail || config.fromEmail.includes('noreply@woodkits.com')) {
+      status = 'warning';
+      issues.push('Using default from email - may not be verified');
+    }
+
+    const response = {
+      success: status === 'healthy',
+      status: status,
+      message: status === 'healthy' ? 'Email service ready' : 'Email service has issues',
+      config: config,
+      issues: issues,
+      recommendations: [
+        'Verify sender email identity in SendGrid dashboard',
+        'Test email functionality using /api/v1/orders/test-email',
+        'Check environment variables: SENDGRID_API_KEY, SENDGRID_FROM_EMAIL, SENDGRID_TO_EMAIL'
+      ]
+    };
+
+    res.status(statusCode).json(response);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      status: 'error',
+      message: 'Failed to check email service status',
+      error: error.message
+    });
+  }
+});
+
 // @desc    Test email sending functionality
 // @route   POST /api/v1/orders/test-email
 // @access  Public (for debugging)
@@ -75,14 +133,40 @@ router.post('/test-email', async (req, res) => {
       code: error.code
     };
     
+    let statusCode = 500; // Default server error
+    let userMessage = 'Test email failed';
+    
     if (error.response) {
       errorDetails.status = error.response.status;
       errorDetails.body = error.response.body;
+      
+      // Map SendGrid errors to appropriate HTTP status codes
+      switch (error.response.status) {
+        case 400:
+          statusCode = 502; // Bad Gateway - external service error
+          userMessage = 'Invalid email configuration';
+          break;
+        case 401:
+          statusCode = 502; // Bad Gateway - external service error
+          userMessage = 'Invalid SendGrid API key';
+          break;
+        case 403:
+          statusCode = 502; // Bad Gateway - external service error
+          userMessage = 'SendGrid sender identity not verified';
+          break;
+        case 429:
+          statusCode = 429; // Keep 429 for rate limiting
+          userMessage = 'SendGrid rate limit exceeded';
+          break;
+        default:
+          statusCode = 502;
+          userMessage = 'SendGrid service error';
+      }
     }
     
-    res.status(500).json({
+    res.status(statusCode).json({
       success: false,
-      message: 'Test email failed',
+      message: userMessage,
       error: errorDetails,
       config: {
         hasApiKey: !!process.env.SENDGRID_API_KEY,
@@ -311,18 +395,42 @@ router.post('/', async (req, res) => {
     } catch (emailError) {
       console.log('❌ Email sending failed:', emailError);
       console.log('⚠️ Email error details:');
+      
+      // Enhanced SendGrid error logging
       if (emailError.response) {
-        console.log('- Status:', emailError.response.status);
-        console.log('- Body:', emailError.response.body);
+        console.log('- SendGrid Status:', emailError.response.status);
+        console.log('- SendGrid Body:', JSON.stringify(emailError.response.body, null, 2));
+        
+        // Log specific SendGrid error types
+        switch (emailError.response.status) {
+          case 400:
+            console.log('🚨 SendGrid Error: Invalid email configuration');
+            break;
+          case 401:
+            console.log('🚨 SendGrid Error: Invalid API key');
+            break;
+          case 403:
+            console.log('🚨 SendGrid Error: Sender identity not verified');
+            console.log('📋 Action needed: Verify sender email in SendGrid dashboard');
+            break;
+          case 429:
+            console.log('🚨 SendGrid Error: Rate limit exceeded');
+            break;
+          default:
+            console.log('🚨 SendGrid Error: Service error');
+        }
       }
-      console.log('- Message:', emailError.message);
+      console.log('- Error Message:', emailError.message);
+      console.log('- Error Code:', emailError.code);
       
       console.log('📝 Order details (email failed):');
       console.log('- Order ID:', orderId);
       console.log('- Customer:', customer.email);
       console.log('- Product:', productName);
       console.log('- Final Price: ₪' + finalPrice);
+      
       // Continue with success response even if email fails
+      // The order is still valid, just email notification failed
     }
 
     console.log('Order processed successfully:', {
