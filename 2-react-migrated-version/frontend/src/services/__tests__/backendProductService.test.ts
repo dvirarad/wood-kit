@@ -327,9 +327,9 @@ describe('BackendProductService', () => {
     test('should handle API errors gracefully', async () => {
       api.get.mockRejectedValue(new Error('API Error'));
 
-      await expect(backendProductService.getClientProducts()).rejects.toThrow('API Error');
+      const result = await backendProductService.getClientProducts();
       
-      // Ensure it doesn't crash the application
+      expect(result).toEqual([]);
       expect(api.get).toHaveBeenCalled();
     });
 
@@ -343,7 +343,8 @@ describe('BackendProductService', () => {
 
       api.get.mockResolvedValue(malformedResponse);
 
-      await expect(backendProductService.getClientProducts()).rejects.toThrow();
+      const result = await backendProductService.getClientProducts();
+      expect(result).toEqual([]);
     });
   });
 });
