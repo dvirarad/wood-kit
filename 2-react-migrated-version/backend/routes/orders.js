@@ -1,42 +1,102 @@
 const express = require('express');
 const router = express.Router();
-const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 
-// Initialize SendGrid
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Initialize NodeMailer transporter
+const createTransporter = () => {
+  // Support multiple email providers
+  const emailProvider = process.env.EMAIL_PROVIDER || 'gmail';
+  
+  switch (emailProvider.toLowerCase()) {
+    case 'gmail':
+      return nodemailer.createTransporter({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD // Use App Password for Gmail
+        }
+      });
+    
+    case 'smtp':
+      return nodemailer.createTransporter({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT || 587,
+        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      });
+    
+    default:
+      // Default to Gmail
+      return nodemailer.createTransporter({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      });
+  }
+};
 
-// @desc    Check SendGrid configuration status
+// @desc    Check email service configuration status
 // @route   GET /api/v1/orders/email-status
 // @access  Public (for debugging)
 router.get('/email-status', async (req, res) => {
   try {
+    const emailProvider = process.env.EMAIL_PROVIDER || 'gmail';
     const config = {
-      hasApiKey: !!process.env.SENDGRID_API_KEY,
-      apiKeyLength: process.env.SENDGRID_API_KEY ? process.env.SENDGRID_API_KEY.length : 0,
-      fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
-      toEmail: process.env.SENDGRID_TO_EMAIL || 'dvirarad@gmail.com'
+      provider: emailProvider,
+      hasUser: !!process.env.EMAIL_USER,
+      hasPassword: !!process.env.EMAIL_PASSWORD,
+      fromEmail: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@woodkits.com',
+      toEmail: process.env.EMAIL_TO || 'dvirarad@gmail.com'
     };
+
+    // Add provider-specific config
+    if (emailProvider === 'smtp') {
+      config.smtpHost = process.env.SMTP_HOST;
+      config.smtpPort = process.env.SMTP_PORT || 587;
+      config.smtpSecure = process.env.SMTP_SECURE === 'true';
+    }
 
     let status = 'healthy';
     let issues = [];
     let statusCode = 200;
 
     // Check for configuration issues
-    if (!config.hasApiKey) {
+    if (!config.hasUser) {
       status = 'unhealthy';
-      issues.push('SendGrid API key not configured');
-      statusCode = 503; // Service unavailable
+      issues.push('EMAIL_USER not configured');
+      statusCode = 503;
     }
 
-    if (config.apiKeyLength > 0 && config.apiKeyLength < 20) {
-      status = 'warning';
-      issues.push('SendGrid API key appears to be invalid (too short)');
+    if (!config.hasPassword) {
+      status = 'unhealthy';
+      issues.push('EMAIL_PASSWORD not configured');
+      statusCode = 503;
+    }
+
+    if (emailProvider === 'smtp' && !config.smtpHost) {
+      status = 'unhealthy';
+      issues.push('SMTP_HOST not configured for SMTP provider');
       statusCode = 503;
     }
 
     if (!config.fromEmail || config.fromEmail.includes('noreply@woodkits.com')) {
       status = 'warning';
-      issues.push('Using default from email - may not be verified');
+      issues.push('Using default from email address');
+    }
+
+    const recommendations = [
+      'Test email functionality using /api/v1/orders/test-email',
+      'For Gmail: Use App Password instead of regular password',
+      'Check environment variables: EMAIL_USER, EMAIL_PASSWORD, EMAIL_FROM, EMAIL_TO'
+    ];
+
+    if (emailProvider === 'smtp') {
+      recommendations.push('For SMTP: Configure SMTP_HOST, SMTP_PORT, SMTP_SECURE');
     }
 
     const response = {
@@ -45,11 +105,7 @@ router.get('/email-status', async (req, res) => {
       message: status === 'healthy' ? 'Email service ready' : 'Email service has issues',
       config: config,
       issues: issues,
-      recommendations: [
-        'Verify sender email identity in SendGrid dashboard',
-        'Test email functionality using /api/v1/orders/test-email',
-        'Check environment variables: SENDGRID_API_KEY, SENDGRID_FROM_EMAIL, SENDGRID_TO_EMAIL'
-      ]
+      recommendations: recommendations
     };
 
     res.status(statusCode).json(response);
@@ -68,43 +124,62 @@ router.get('/email-status', async (req, res) => {
 // @access  Public (for debugging)
 router.post('/test-email', async (req, res) => {
   try {
-    console.log('🧪 Testing email functionality...');
+    console.log('🧪 Testing email functionality with NodeMailer...');
     
     // Check environment variables
+    const emailProvider = process.env.EMAIL_PROVIDER || 'gmail';
     const config = {
-      hasApiKey: !!process.env.SENDGRID_API_KEY,
-      apiKeyLength: process.env.SENDGRID_API_KEY ? process.env.SENDGRID_API_KEY.length : 0,
-      fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
-      toEmail: process.env.SENDGRID_TO_EMAIL || 'dvirarad@gmail.com'
+      provider: emailProvider,
+      hasUser: !!process.env.EMAIL_USER,
+      hasPassword: !!process.env.EMAIL_PASSWORD,
+      fromEmail: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@woodkits.com',
+      toEmail: process.env.EMAIL_TO || 'dvirarad@gmail.com'
     };
     
     console.log('📋 Email Configuration:', config);
     
-    if (!config.hasApiKey) {
-      return res.status(400).json({
+    if (!config.hasUser) {
+      return res.status(503).json({
         success: false,
-        message: 'SendGrid API key not configured',
+        message: 'Email user not configured',
         config: config
       });
     }
     
+    if (!config.hasPassword) {
+      return res.status(503).json({
+        success: false,
+        message: 'Email password not configured',
+        config: config
+      });
+    }
+    
+    // Create transporter
+    const transporter = createTransporter();
+    
+    // Verify transporter configuration
+    await transporter.verify();
+    console.log('✅ Email transporter verified successfully');
+    
     // Test email
     const testMessage = {
-      to: config.toEmail,
       from: config.fromEmail,
-      subject: '🧪 Wood Kits - Email Test',
+      to: config.toEmail,
+      subject: '🧪 Wood Kits - NodeMailer Test',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2c3e50;">🧪 Email Test Successful!</h2>
-          <p>This is a test email from Wood Kits backend.</p>
+          <h2 style="color: #2c3e50;">🧪 NodeMailer Test Successful!</h2>
+          <p>This is a test email from Wood Kits backend using NodeMailer.</p>
           <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
           <p><strong>Configuration:</strong></p>
           <ul>
-            <li>API Key: ${config.hasApiKey ? '✅ Set' : '❌ Missing'}</li>
+            <li>Provider: ${config.provider}</li>
+            <li>Email User: ${config.hasUser ? '✅ Set' : '❌ Missing'}</li>
+            <li>Email Password: ${config.hasPassword ? '✅ Set' : '❌ Missing'}</li>
             <li>From Email: ${config.fromEmail}</li>
             <li>To Email: ${config.toEmail}</li>
           </ul>
-          <p>If you received this email, SendGrid is working correctly! 🎉</p>
+          <p>If you received this email, NodeMailer is working correctly! 🎉</p>
         </div>
       `
     };
@@ -115,52 +190,46 @@ router.post('/test-email', async (req, res) => {
       subject: testMessage.subject
     });
     
-    await sgMail.send(testMessage);
-    console.log('✅ Test email sent successfully!');
+    const result = await transporter.sendMail(testMessage);
+    console.log('✅ Test email sent successfully!', result);
     
     res.json({
       success: true,
-      message: 'Test email sent successfully',
+      message: 'Test email sent successfully via NodeMailer',
       config: config,
-      sentTo: testMessage.to
+      sentTo: testMessage.to,
+      messageId: result.messageId
     });
     
   } catch (error) {
-    console.log('❌ Test email failed:', error);
+    console.log('❌ NodeMailer test email failed:', error);
     
     let errorDetails = {
       message: error.message,
       code: error.code
     };
     
-    let statusCode = 500; // Default server error
-    let userMessage = 'Test email failed';
+    let statusCode = 502; // Default service error
+    let userMessage = 'NodeMailer email test failed';
     
-    if (error.response) {
-      errorDetails.status = error.response.status;
-      errorDetails.body = error.response.body;
-      
-      // Map SendGrid errors to appropriate HTTP status codes
-      switch (error.response.status) {
-        case 400:
-          statusCode = 502; // Bad Gateway - external service error
-          userMessage = 'Invalid email configuration';
+    // Map NodeMailer errors to appropriate HTTP status codes
+    if (error.code) {
+      switch (error.code) {
+        case 'EAUTH':
+          statusCode = 502;
+          userMessage = 'Email authentication failed - check EMAIL_USER and EMAIL_PASSWORD';
           break;
-        case 401:
-          statusCode = 502; // Bad Gateway - external service error
-          userMessage = 'Invalid SendGrid API key';
+        case 'ECONNECTION':
+          statusCode = 502;
+          userMessage = 'Failed to connect to email service';
           break;
-        case 403:
-          statusCode = 502; // Bad Gateway - external service error
-          userMessage = 'SendGrid sender identity not verified';
-          break;
-        case 429:
-          statusCode = 429; // Keep 429 for rate limiting
-          userMessage = 'SendGrid rate limit exceeded';
+        case 'ETIMEDOUT':
+          statusCode = 504;
+          userMessage = 'Email service timeout';
           break;
         default:
           statusCode = 502;
-          userMessage = 'SendGrid service error';
+          userMessage = 'Email service error';
       }
     }
     
@@ -169,9 +238,11 @@ router.post('/test-email', async (req, res) => {
       message: userMessage,
       error: errorDetails,
       config: {
-        hasApiKey: !!process.env.SENDGRID_API_KEY,
-        fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
-        toEmail: process.env.SENDGRID_TO_EMAIL || 'dvirarad@gmail.com'
+        provider: process.env.EMAIL_PROVIDER || 'gmail',
+        hasUser: !!process.env.EMAIL_USER,
+        hasPassword: !!process.env.EMAIL_PASSWORD,
+        fromEmail: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@woodkits.com',
+        toEmail: process.env.EMAIL_TO || 'dvirarad@gmail.com'
       }
     });
   }
@@ -360,64 +431,74 @@ router.post('/', async (req, res) => {
       </div>
     `;
 
-    // Check SendGrid configuration
+    // Check NodeMailer email configuration
     console.log('📧 Email configuration check:');
-    console.log('- SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? 'SET' : 'MISSING');
-    console.log('- SENDGRID_FROM_EMAIL:', process.env.SENDGRID_FROM_EMAIL || 'USING DEFAULT');
-    console.log('- SENDGRID_TO_EMAIL:', process.env.SENDGRID_TO_EMAIL || 'USING DEFAULT');
+    console.log('- EMAIL_USER:', process.env.EMAIL_USER ? 'SET' : 'MISSING');
+    console.log('- EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING');
+    console.log('- EMAIL_FROM:', process.env.EMAIL_FROM || 'USING EMAIL_USER');
+    console.log('- EMAIL_TO:', process.env.EMAIL_TO || 'USING DEFAULT');
+    console.log('- EMAIL_PROVIDER:', process.env.EMAIL_PROVIDER || 'gmail');
 
-    // For testing - log order details instead of sending emails if SendGrid fails
+    // Send emails with NodeMailer
     try {
-      // Send emails
-      const messages = [
-        {
-          to: process.env.SENDGRID_TO_EMAIL || 'dvirarad@gmail.com',
-          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
-          subject: `🪵 הזמנה חדשה #${orderId} - ${productName}`,
-          html: adminEmailHtml
-        },
-        {
-          to: customer.email,
-          from: process.env.SENDGRID_FROM_EMAIL || 'noreply@woodkits.com',
-          subject: `תודה על ההזמנה - Wood Kits #${orderId}`,
-          html: customerEmailHtml
-        }
-      ];
+      const transporter = createTransporter();
+      const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+      const toEmail = process.env.EMAIL_TO || 'dvirarad@gmail.com';
+      
+      // Admin email
+      const adminMessage = {
+        from: fromEmail,
+        to: toEmail,
+        subject: `🪵 הזמנה חדשה #${orderId} - ${productName}`,
+        html: adminEmailHtml
+      };
 
-      console.log('📨 Attempting to send emails:', {
-        adminEmail: messages[0].to,
-        customerEmail: messages[1].to,
-        fromEmail: messages[0].from
+      // Customer email  
+      const customerMessage = {
+        from: fromEmail,
+        to: customer.email,
+        subject: `תודה על ההזמנה - Wood Kits #${orderId}`,
+        html: customerEmailHtml
+      };
+
+      console.log('📨 Attempting to send emails via NodeMailer:', {
+        adminEmail: adminMessage.to,
+        customerEmail: customerMessage.to,
+        fromEmail: adminMessage.from
       });
 
-      await sgMail.send(messages);
-      console.log('✅ Order emails sent successfully via SendGrid');
+      // Send admin email
+      const adminResult = await transporter.sendMail(adminMessage);
+      console.log('✅ Admin email sent:', adminResult.messageId);
+
+      // Send customer email
+      const customerResult = await transporter.sendMail(customerMessage);
+      console.log('✅ Customer email sent:', customerResult.messageId);
+      
+      console.log('✅ Order emails sent successfully via NodeMailer');
     } catch (emailError) {
-      console.log('❌ Email sending failed:', emailError);
+      console.log('❌ NodeMailer email sending failed:', emailError);
       console.log('⚠️ Email error details:');
       
-      // Enhanced SendGrid error logging
-      if (emailError.response) {
-        console.log('- SendGrid Status:', emailError.response.status);
-        console.log('- SendGrid Body:', JSON.stringify(emailError.response.body, null, 2));
+      // Enhanced NodeMailer error logging
+      if (emailError.code) {
+        console.log('- NodeMailer Error Code:', emailError.code);
         
-        // Log specific SendGrid error types
-        switch (emailError.response.status) {
-          case 400:
-            console.log('🚨 SendGrid Error: Invalid email configuration');
+        // Log specific NodeMailer error types
+        switch (emailError.code) {
+          case 'EAUTH':
+            console.log('🚨 NodeMailer Error: Authentication failed');
+            console.log('📋 Action needed: Check EMAIL_USER and EMAIL_PASSWORD (use App Password for Gmail)');
             break;
-          case 401:
-            console.log('🚨 SendGrid Error: Invalid API key');
+          case 'ECONNECTION':
+            console.log('🚨 NodeMailer Error: Connection failed');
+            console.log('📋 Action needed: Check internet connection and email provider settings');
             break;
-          case 403:
-            console.log('🚨 SendGrid Error: Sender identity not verified');
-            console.log('📋 Action needed: Verify sender email in SendGrid dashboard');
-            break;
-          case 429:
-            console.log('🚨 SendGrid Error: Rate limit exceeded');
+          case 'ETIMEDOUT':
+            console.log('🚨 NodeMailer Error: Connection timeout');
             break;
           default:
-            console.log('🚨 SendGrid Error: Service error');
+            console.log('🚨 NodeMailer Error: Service error');
         }
       }
       console.log('- Error Message:', emailError.message);
@@ -453,9 +534,9 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Order submission error:', error);
     
-    // Check if it's a SendGrid error
-    if (error.code && error.code >= 400) {
-      console.error('SendGrid error:', error.response?.body);
+    // Log NodeMailer or general errors
+    if (error.code) {
+      console.error('Email service error:', error.code, error.message);
     }
 
     res.status(500).json({

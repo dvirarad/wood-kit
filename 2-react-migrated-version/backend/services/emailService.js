@@ -1,14 +1,45 @@
-const sgMail = require('@sendgrid/mail');
-
-// Initialize SendGrid
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-}
+const nodemailer = require('nodemailer');
 
 class EmailService {
   constructor() {
-    this.fromEmail = process.env.FROM_EMAIL || 'info@woodkits.com';
-    this.isConfigured = !!process.env.SENDGRID_API_KEY;
+    this.fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'info@woodkits.com';
+    this.isConfigured = !!(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
+  }
+
+  // Create NodeMailer transporter
+  createTransporter() {
+    const emailProvider = process.env.EMAIL_PROVIDER || 'gmail';
+    
+    switch (emailProvider.toLowerCase()) {
+      case 'gmail':
+        return nodemailer.createTransporter({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          }
+        });
+      
+      case 'smtp':
+        return nodemailer.createTransporter({
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT || 587,
+          secure: process.env.SMTP_SECURE === 'true',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          }
+        });
+      
+      default:
+        return nodemailer.createTransporter({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          }
+        });
+    }
   }
 
   // Check if email service is properly configured
@@ -26,22 +57,20 @@ class EmailService {
     try {
       const translations = this.getTranslations(language);
       const template = this.generateOrderConfirmationTemplate(order, translations);
+      const transporter = this.createTransporter();
 
-      const msg = {
+      const mailOptions = {
+        from: `Wood Kits Team <${this.fromEmail}>`,
         to: order.customer.email,
-        from: {
-          email: this.fromEmail,
-          name: 'Wood Kits Team'
-        },
         subject: `${translations.orderConfirmation} - ${order.orderId}`,
         html: template.html,
         text: template.text
       };
 
-      const result = await sgMail.send(msg);
+      const result = await transporter.sendMail(mailOptions);
       
       console.log(`Order confirmation email sent to ${order.customer.email}`);
-      return { sent: true, messageId: result[0].headers['x-message-id'] };
+      return { sent: true, messageId: result.messageId };
     } catch (error) {
       console.error('Error sending order confirmation email:', error);
       throw error;
@@ -58,22 +87,20 @@ class EmailService {
     try {
       const translations = this.getTranslations(language);
       const template = this.generateStatusUpdateTemplate(order, translations);
+      const transporter = this.createTransporter();
 
-      const msg = {
+      const mailOptions = {
+        from: `Wood Kits Team <${this.fromEmail}>`,
         to: order.customer.email,
-        from: {
-          email: this.fromEmail,
-          name: 'Wood Kits Team'
-        },
         subject: `${translations.orderUpdate} - ${order.orderId}`,
         html: template.html,
         text: template.text
       };
 
-      const result = await sgMail.send(msg);
+      const result = await transporter.sendMail(mailOptions);
       
       console.log(`Status update email sent to ${order.customer.email}`);
-      return { sent: true, messageId: result[0].headers['x-message-id'] };
+      return { sent: true, messageId: result.messageId };
     } catch (error) {
       console.error('Error sending status update email:', error);
       throw error;
@@ -88,21 +115,20 @@ class EmailService {
     }
 
     try {
-      const msg = {
+      const transporter = this.createTransporter();
+      
+      const mailOptions = {
+        from: `Wood Kits Team <${this.fromEmail}>`,
         to,
-        from: {
-          email: this.fromEmail,
-          name: 'Wood Kits Team'
-        },
         subject,
         html: content.html || content,
         text: content.text || content
       };
 
-      const result = await sgMail.send(msg);
+      const result = await transporter.sendMail(mailOptions);
       
       console.log(`Custom email sent to ${to}`);
-      return { sent: true, messageId: result[0].headers['x-message-id'] };
+      return { sent: true, messageId: result.messageId };
     } catch (error) {
       console.error('Error sending custom email:', error);
       throw error;
