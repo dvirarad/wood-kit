@@ -1,15 +1,18 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import AdminProducts from '../AdminProducts';
 
 // Mock the backend service
 jest.mock('../../services/backendProductService', () => ({
-  backendProductService: {
-    getProducts: jest.fn(),
+  __esModule: true,
+  default: {
+    getAllProducts: jest.fn(),
     addProduct: jest.fn(),
     updateProduct: jest.fn(),
     deleteProduct: jest.fn(),
+    subscribe: jest.fn(() => () => {}), // Mock subscribe method
   }
 }));
 
@@ -19,6 +22,11 @@ jest.mock('@mui/material/Dialog', () => {
     return open ? <div data-testid="dialog">{children}</div> : null;
   };
 });
+
+// Helper function to render with Router context
+const renderWithRouter = (component: React.ReactElement) => {
+  return render(<BrowserRouter>{component}</BrowserRouter>);
+};
 
 describe('AdminProducts', () => {
   const mockProduct = {
@@ -48,14 +56,22 @@ describe('AdminProducts', () => {
     // Reset all mocks before each test
     jest.clearAllMocks();
     
+    // Mock localStorage for authentication
+    const mockStorage = {
+      getItem: jest.fn(() => 'mock-admin-token'),
+      setItem: jest.fn(),
+      removeItem: jest.fn()
+    };
+    Object.defineProperty(window, 'localStorage', { value: mockStorage });
+    
     // Mock successful authentication
-    const { backendProductService } = require('../../services/backendProductService');
-    backendProductService.getProducts.mockResolvedValue([mockProduct]);
+    const backendProductService = require('../../services/backendProductService').default;
+    backendProductService.getAllProducts.mockResolvedValue([mockProduct]);
   });
 
   describe('Dimension Handling', () => {
     test('should handle products with correct dimensions (width, height, depth)', async () => {
-      render(<AdminProducts />);
+      renderWithRouter(<AdminProducts />);
       
       // Wait for products to load
       await waitFor(() => {
@@ -89,10 +105,10 @@ describe('AdminProducts', () => {
         }
       };
 
-      const { backendProductService } = require('../../services/backendProductService');
-      backendProductService.getProducts.mockResolvedValue([productWithMissingDimensions]);
+      const backendProductService = require('../../services/backendProductService').default;
+      backendProductService.getAllProducts.mockResolvedValue([productWithMissingDimensions]);
 
-      render(<AdminProducts />);
+      renderWithRouter(<AdminProducts />);
       
       await waitFor(() => {
         expect(screen.getByText('ספרייה אמסטרדם')).toBeInTheDocument();
@@ -116,10 +132,10 @@ describe('AdminProducts', () => {
         dimensions: undefined
       };
 
-      const { backendProductService } = require('../../services/backendProductService');
-      backendProductService.getProducts.mockResolvedValue([productWithoutDimensions]);
+      const backendProductService = require('../../services/backendProductService').default;
+      backendProductService.getAllProducts.mockResolvedValue([productWithoutDimensions]);
 
-      render(<AdminProducts />);
+      renderWithRouter(<AdminProducts />);
       
       await waitFor(() => {
         expect(screen.getByText('ספרייה אמסטרדם')).toBeInTheDocument();
@@ -140,7 +156,7 @@ describe('AdminProducts', () => {
 
   describe('Price Calculator', () => {
     test('should calculate price correctly with all dimensions', async () => {
-      render(<AdminProducts />);
+      renderWithRouter(<AdminProducts />);
       
       await waitFor(() => {
         expect(screen.getByText('ספרייה אמסטרדם')).toBeInTheDocument();
@@ -170,7 +186,7 @@ describe('AdminProducts', () => {
       const { backendProductService } = require('../../services/backendProductService');
       backendProductService.getProducts.mockResolvedValue([productWithPartialDimensions]);
 
-      render(<AdminProducts />);
+      renderWithRouter(<AdminProducts />);
       
       await waitFor(() => {
         expect(screen.getByText('ספרייה אמסטרדם')).toBeInTheDocument();
@@ -190,7 +206,7 @@ describe('AdminProducts', () => {
 
   describe('Dimension Updates', () => {
     test('should update dimension values correctly', async () => {
-      render(<AdminProducts />);
+      renderWithRouter(<AdminProducts />);
       
       await waitFor(() => {
         expect(screen.getByText('ספרייה אמסטרדם')).toBeInTheDocument();
@@ -230,7 +246,7 @@ describe('AdminProducts', () => {
 
       // Should not throw an error
       expect(() => {
-        render(<AdminProducts />);
+        renderWithRouter(<AdminProducts />);
       }).not.toThrow();
     });
   });

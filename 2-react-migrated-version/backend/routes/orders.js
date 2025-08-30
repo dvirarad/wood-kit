@@ -9,7 +9,7 @@ const createTransporter = () => {
   
   switch (emailProvider.toLowerCase()) {
     case 'gmail':
-      return nodemailer.createTransporter({
+      return nodemailer.createTransport({
         service: 'gmail',
         auth: {
           user: process.env.EMAIL_USER,
@@ -18,7 +18,7 @@ const createTransporter = () => {
       });
     
     case 'smtp':
-      return nodemailer.createTransporter({
+      return nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT || 587,
         secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
@@ -30,7 +30,7 @@ const createTransporter = () => {
     
     default:
       // Default to Gmail
-      return nodemailer.createTransporter({
+      return nodemailer.createTransport({
         service: 'gmail',
         auth: {
           user: process.env.EMAIL_USER,

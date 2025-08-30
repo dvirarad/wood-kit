@@ -12,7 +12,7 @@ class EmailService {
     
     switch (emailProvider.toLowerCase()) {
       case 'gmail':
-        return nodemailer.createTransporter({
+        return nodemailer.createTransport({
           service: 'gmail',
           auth: {
             user: process.env.EMAIL_USER,
@@ -21,7 +21,7 @@ class EmailService {
         });
       
       case 'smtp':
-        return nodemailer.createTransporter({
+        return nodemailer.createTransport({
           host: process.env.SMTP_HOST,
           port: process.env.SMTP_PORT || 587,
           secure: process.env.SMTP_SECURE === 'true',
@@ -32,7 +32,7 @@ class EmailService {
         });
       
       default:
-        return nodemailer.createTransporter({
+        return nodemailer.createTransport({
           service: 'gmail',
           auth: {
             user: process.env.EMAIL_USER,
