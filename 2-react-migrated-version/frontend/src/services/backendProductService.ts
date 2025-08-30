@@ -281,25 +281,20 @@ class BackendProductService {
       if (options?.language) queryParams.append('language', options.language);
       if (options?.limit) queryParams.append('limit', options.limit.toString());
       
-      interface ApiResponse {
-        success: boolean;
-        data: BackendProduct[];
-        pagination: any;
-        meta: any;
-      }
-      
-      const response = await api.get<ApiResponse>(`/products?${queryParams.toString()}`);
+      // Use any type to handle complex nested API response structure 
+      // Actual structure: response.data.data contains the products array
+      const response = await api.get<any>(`/products?${queryParams.toString()}`);
       
       console.log('Raw API response:', response);
       console.log('Raw API data:', response.data);
       
       // Check if we have the expected API response format: {success: boolean, data: BackendProduct[]}
-      if (!response.data || !Array.isArray(response.data)) {
+      if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
         console.error('Invalid API response format:', response);
         return [];
       }
       
-      const convertedProducts = response.data.map((product, index) => {
+      const convertedProducts = response.data.data.map((product: any, index: number) => {
         console.log(`Converting product ${index}:`, product);
         console.log(`Product ${index} shortDescription:`, product.shortDescription);
         console.log(`Product ${index} fullDescription:`, product.fullDescription);
