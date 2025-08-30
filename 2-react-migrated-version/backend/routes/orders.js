@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const nodemailer = require('nodemailer');
 
-// Initialize NodeMailer transporter
+// Initialize NodeMailer transporter with timeout configuration
 const createTransporter = () => {
   // Support multiple email providers
   const emailProvider = process.env.EMAIL_PROVIDER || 'gmail';
@@ -14,7 +14,11 @@ const createTransporter = () => {
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASSWORD // Use App Password for Gmail
-        }
+        },
+        // Add timeout configuration to prevent hanging
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 10000,   // 10 seconds
+        socketTimeout: 10000      // 10 seconds
       });
     
     case 'smtp':
@@ -25,7 +29,11 @@ const createTransporter = () => {
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASSWORD
-        }
+        },
+        // Add timeout configuration to prevent hanging
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 10000,   // 10 seconds
+        socketTimeout: 10000      // 10 seconds
       });
     
     default:
@@ -35,7 +43,11 @@ const createTransporter = () => {
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASSWORD
-        }
+        },
+        // Add timeout configuration to prevent hanging
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 10000,   // 10 seconds
+        socketTimeout: 10000      // 10 seconds
       });
   }
 };
@@ -439,7 +451,7 @@ router.post('/', async (req, res) => {
     console.log('- EMAIL_TO:', process.env.EMAIL_TO || 'USING DEFAULT');
     console.log('- EMAIL_PROVIDER:', process.env.EMAIL_PROVIDER || 'gmail');
 
-    // Send emails with NodeMailer
+    // Send emails with NodeMailer with timeout wrapper
     try {
       const transporter = createTransporter();
       const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
@@ -467,12 +479,22 @@ router.post('/', async (req, res) => {
         fromEmail: adminMessage.from
       });
 
-      // Send admin email
-      const adminResult = await transporter.sendMail(adminMessage);
+      // Wrap email sending with timeout promise to prevent hanging
+      const emailTimeout = (promise, timeoutMs = 15000) => {
+        return Promise.race([
+          promise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Email sending timeout')), timeoutMs)
+          )
+        ]);
+      };
+
+      // Send admin email with timeout
+      const adminResult = await emailTimeout(transporter.sendMail(adminMessage));
       console.log('✅ Admin email sent:', adminResult.messageId);
 
-      // Send customer email
-      const customerResult = await transporter.sendMail(customerMessage);
+      // Send customer email with timeout
+      const customerResult = await emailTimeout(transporter.sendMail(customerMessage));
       console.log('✅ Customer email sent:', customerResult.messageId);
       
       console.log('✅ Order emails sent successfully via NodeMailer');
