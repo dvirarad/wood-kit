@@ -9,46 +9,83 @@ const createTransporter = () => {
   
   switch (emailProvider.toLowerCase()) {
     case 'gmail':
-      return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD // Use App Password for Gmail
-        },
-        // Add timeout configuration to prevent hanging
-        connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 10000,   // 10 seconds
-        socketTimeout: 10000      // 10 seconds
-      });
+      // Try alternative ports/configurations for Railway production
+      if (process.env.NODE_ENV === 'production') {
+        return nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465, // Try port 465 with SSL for production
+          secure: true, // Use SSL
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          },
+          // Shorter timeouts for production
+          connectionTimeout: 5000,
+          greetingTimeout: 5000,
+          socketTimeout: 5000,
+          // Additional options for Railway
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+      } else {
+        // Local development - use service shorthand
+        return nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 10000
+        });
+      }
     
     case 'smtp':
       return nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT || 587,
-        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+        secure: process.env.SMTP_SECURE === 'true',
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASSWORD
         },
-        // Add timeout configuration to prevent hanging
-        connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 10000,   // 10 seconds
-        socketTimeout: 10000      // 10 seconds
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000
       });
     
     default:
-      // Default to Gmail
-      return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD
-        },
-        // Add timeout configuration to prevent hanging
-        connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 10000,   // 10 seconds
-        socketTimeout: 10000      // 10 seconds
-      });
+      // Default to Gmail with production-specific config
+      if (process.env.NODE_ENV === 'production') {
+        return nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          },
+          connectionTimeout: 5000,
+          greetingTimeout: 5000,
+          socketTimeout: 5000,
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+      } else {
+        return nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 10000
+        });
+      }
   }
 };
 
