@@ -289,12 +289,12 @@ class BackendProductService {
       console.log('Raw API data:', response.data);
       
       // Check if we have the expected API response format: {success: boolean, data: BackendProduct[]}
-      if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
+      if (!response.data || !Array.isArray(response.data)) {
         console.error('Invalid API response format:', response);
         return [];
       }
       
-      const convertedProducts = response.data.data.map((product: any, index: number) => {
+      const convertedProducts = response.data.map((product: any, index: number) => {
         console.log(`Converting product ${index}:`, product);
         console.log(`Product ${index} shortDescription:`, product.shortDescription);
         console.log(`Product ${index} fullDescription:`, product.fullDescription);
