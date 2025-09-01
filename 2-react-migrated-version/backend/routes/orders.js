@@ -264,7 +264,20 @@ router.post('/test-email', async (req, res) => {
 // @route   POST /api/v1/orders
 // @access  Public
 router.post('/', async (req, res) => {
+  const startTime = Date.now();
+  const logs = [];
+  
+  const log = (message, data = null) => {
+    const timestamp = new Date().toISOString();
+    const logEntry = `[${timestamp}] ${message}`;
+    console.log(logEntry, data || '');
+    logs.push({ timestamp, message, data });
+  };
+  
   try {
+    log('=== Order API Request Started ===');
+    log('Request body received', { bodyKeys: Object.keys(req.body) });
+    
     const {
       productId,
       productName,
@@ -278,16 +291,28 @@ router.post('/', async (req, res) => {
       language
     } = req.body;
 
+    log('Order data extracted', {
+      productId,
+      productName,
+      customerEmail: customer?.email,
+      finalPrice
+    });
+
     // Validate required fields
     if (!productId || !productName || !customer || !customer.name || !customer.email || !customer.phone || !customer.address) {
+      log('❌ Validation failed - missing required fields');
       return res.status(400).json({
         success: false,
-        message: 'Missing required order information'
+        message: 'Missing required order information',
+        logs
       });
     }
 
+    log('✅ Validation passed');
+
     // Generate order ID
     const orderId = `WK-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    log('Order ID generated', { orderId });
 
     // Create email templates
     const adminEmailHtml = `
@@ -443,19 +468,29 @@ router.post('/', async (req, res) => {
       </div>
     `;
 
-    // Check NodeMailer email configuration
-    console.log('📧 Email configuration check:');
-    console.log('- EMAIL_USER:', process.env.EMAIL_USER ? 'SET' : 'MISSING');
-    console.log('- EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING');
-    console.log('- EMAIL_FROM:', process.env.EMAIL_FROM || 'USING EMAIL_USER');
-    console.log('- EMAIL_TO:', process.env.EMAIL_TO || 'USING DEFAULT');
-    console.log('- EMAIL_PROVIDER:', process.env.EMAIL_PROVIDER || 'gmail');
+    log('📧 Checking email configuration...');
+    const emailConfig = {
+      EMAIL_USER: process.env.EMAIL_USER ? 'SET' : 'MISSING',
+      EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? 'SET' : 'MISSING', 
+      EMAIL_FROM: process.env.EMAIL_FROM || 'USING EMAIL_USER',
+      EMAIL_TO: process.env.EMAIL_TO || 'USING DEFAULT',
+      EMAIL_PROVIDER: process.env.EMAIL_PROVIDER || 'gmail'
+    };
+    log('Email configuration status', emailConfig);
 
     // Send emails with NodeMailer with timeout wrapper
     try {
+      log('🔧 Creating NodeMailer transporter...');
       const transporter = createTransporter();
+      log('✅ Transporter created successfully');
+      
       const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
       const toEmail = process.env.EMAIL_TO || 'dvirarad@gmail.com';
+      
+      log('📧 Email addresses configured', {
+        fromEmail: fromEmail ? 'SET' : 'MISSING',
+        toEmail: toEmail ? 'SET' : 'MISSING'
+      });
       
       // Admin email
       const adminMessage = {
@@ -473,10 +508,12 @@ router.post('/', async (req, res) => {
         html: customerEmailHtml
       };
 
-      console.log('📨 Attempting to send emails via NodeMailer:', {
-        adminEmail: adminMessage.to,
-        customerEmail: customerMessage.to,
-        fromEmail: adminMessage.from
+      log('📨 Email messages prepared', {
+        adminTo: adminMessage.to,
+        customerTo: customerMessage.to,
+        from: adminMessage.from,
+        adminSubject: adminMessage.subject,
+        customerSubject: customerMessage.subject
       });
 
       // Wrap email sending with timeout promise to prevent hanging
@@ -489,57 +526,74 @@ router.post('/', async (req, res) => {
         ]);
       };
 
+      log('📤 Attempting to send admin email...');
+      const adminEmailStart = Date.now();
+      
       // Send admin email with timeout
       const adminResult = await emailTimeout(transporter.sendMail(adminMessage));
-      console.log('✅ Admin email sent:', adminResult.messageId);
+      const adminEmailTime = Date.now() - adminEmailStart;
+      log('✅ Admin email sent successfully', { 
+        messageId: adminResult.messageId, 
+        timeTaken: `${adminEmailTime}ms`,
+        response: adminResult.response 
+      });
 
+      log('📤 Attempting to send customer email...');
+      const customerEmailStart = Date.now();
+      
       // Send customer email with timeout
       const customerResult = await emailTimeout(transporter.sendMail(customerMessage));
-      console.log('✅ Customer email sent:', customerResult.messageId);
+      const customerEmailTime = Date.now() - customerEmailStart;
+      log('✅ Customer email sent successfully', { 
+        messageId: customerResult.messageId, 
+        timeTaken: `${customerEmailTime}ms`,
+        response: customerResult.response 
+      });
       
-      console.log('✅ Order emails sent successfully via NodeMailer');
+      log('🎉 All emails sent successfully via NodeMailer');
     } catch (emailError) {
-      console.log('❌ NodeMailer email sending failed:', emailError);
-      console.log('⚠️ Email error details:');
+      log('❌ Email sending failed', {
+        errorMessage: emailError.message,
+        errorCode: emailError.code,
+        errorStack: emailError.stack
+      });
       
       // Enhanced NodeMailer error logging
       if (emailError.code) {
-        console.log('- NodeMailer Error Code:', emailError.code);
-        
-        // Log specific NodeMailer error types
+        let errorAnalysis = '';
         switch (emailError.code) {
           case 'EAUTH':
-            console.log('🚨 NodeMailer Error: Authentication failed');
-            console.log('📋 Action needed: Check EMAIL_USER and EMAIL_PASSWORD (use App Password for Gmail)');
+            errorAnalysis = 'Authentication failed - check EMAIL_USER and EMAIL_PASSWORD (use App Password for Gmail)';
             break;
           case 'ECONNECTION':
-            console.log('🚨 NodeMailer Error: Connection failed');
-            console.log('📋 Action needed: Check internet connection and email provider settings');
+            errorAnalysis = 'Connection failed - check internet connection and email provider settings';
             break;
           case 'ETIMEDOUT':
-            console.log('🚨 NodeMailer Error: Connection timeout');
+            errorAnalysis = 'Connection timeout - email service not responding';
             break;
           default:
-            console.log('🚨 NodeMailer Error: Service error');
+            errorAnalysis = 'Unknown email service error';
         }
+        log('📋 Error analysis', { errorAnalysis });
       }
-      console.log('- Error Message:', emailError.message);
-      console.log('- Error Code:', emailError.code);
       
-      console.log('📝 Order details (email failed):');
-      console.log('- Order ID:', orderId);
-      console.log('- Customer:', customer.email);
-      console.log('- Product:', productName);
-      console.log('- Final Price: ₪' + finalPrice);
+      log('📝 Order details (email failed)', {
+        orderId,
+        customerEmail: customer.email,
+        productName,
+        finalPrice: `₪${finalPrice}`
+      });
       
       // Continue with success response even if email fails
       // The order is still valid, just email notification failed
     }
 
-    console.log('Order processed successfully:', {
+    const totalTime = Date.now() - startTime;
+    log('🎯 Order processed successfully', {
       orderId,
       customerEmail: customer.email,
-      productName
+      productName,
+      totalProcessingTime: `${totalTime}ms`
     });
 
     res.status(200).json({
@@ -550,21 +604,33 @@ router.post('/', async (req, res) => {
         orderDate,
         finalPrice,
         estimatedContact: '24 hours'
+      },
+      logs: logs,
+      debug: {
+        processingTime: `${totalTime}ms`,
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
       }
     });
 
   } catch (error) {
-    console.error('Order submission error:', error);
-    
-    // Log NodeMailer or general errors
-    if (error.code) {
-      console.error('Email service error:', error.code, error.message);
-    }
+    const totalTime = Date.now() - startTime;
+    log('💥 Fatal error in order processing', {
+      errorMessage: error.message,
+      errorCode: error.code,
+      errorStack: error.stack
+    });
 
     res.status(500).json({
       success: false,
       message: 'Failed to submit order',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      logs: logs,
+      debug: {
+        processingTime: `${totalTime}ms`,
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
+      }
     });
   }
 });
