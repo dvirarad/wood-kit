@@ -557,6 +557,11 @@ router.post('/', async (req, res) => {
             // Option 1: Resend API (if RESEND_API_KEY is set)
             if (process.env.RESEND_API_KEY) {
               log('📡 Using Resend API for email delivery');
+              
+              // Use Resend's default domain instead of gmail.com (which requires verification)
+              const resendFromEmail = 'woodkits@resend.dev'; // Resend's default domain
+              log('📧 Using Resend default domain', { from: resendFromEmail });
+              
               const response = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: {
@@ -564,10 +569,11 @@ router.post('/', async (req, res) => {
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                  from: fromEmail,
+                  from: resendFromEmail,
                   to: [emailData.to],
                   subject: emailData.subject,
-                  html: emailData.html
+                  html: emailData.html,
+                  reply_to: fromEmail // Keep original email as reply-to
                 })
               });
               
