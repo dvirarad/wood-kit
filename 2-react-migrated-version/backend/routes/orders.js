@@ -664,12 +664,21 @@ router.post('/', async (req, res) => {
 
         log('📤 Attempting to send customer email via HTTP...');
         const customerEmailStart = Date.now();
-        const customerResult = await sendEmailViaHTTP(emailMessages.customer);
-        const customerEmailTime = Date.now() - customerEmailStart;
-        log('✅ Customer email sent', { 
-          messageId: customerResult.messageId, 
-          timeTaken: `${customerEmailTime}ms`
-        });
+        try {
+          const customerResult = await sendEmailViaHTTP(emailMessages.customer);
+          const customerEmailTime = Date.now() - customerEmailStart;
+          log('✅ Customer email sent', { 
+            messageId: customerResult.messageId, 
+            timeTaken: `${customerEmailTime}ms`
+          });
+        } catch (customerEmailError) {
+          const customerEmailTime = Date.now() - customerEmailStart;
+          log('⚠️ Customer email skipped (free plan limitation)', {
+            error: customerEmailError.message,
+            timeTaken: `${customerEmailTime}ms`,
+            note: 'Verify domain in Resend to send to all recipients'
+          });
+        }
         
         log('🎉 All emails processed via HTTP (production mode)');
         
