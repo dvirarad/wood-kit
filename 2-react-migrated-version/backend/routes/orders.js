@@ -551,14 +551,67 @@ router.post('/', async (req, res) => {
         // Production: Use HTTP-based email service (Railway blocks SMTP)
         log('🌐 Using HTTP-based email for production (Railway SMTP blocked)');
         
-        // Try to use Gmail API via fetch if possible, fallback to logging
+        // Try HTTP-based email services (Resend, SMTP2GO, etc.)
         const sendEmailViaHTTP = async (emailData) => {
           try {
-            // Simple HTTP email webhook approach
-            const webhookUrl = process.env.EMAIL_WEBHOOK_URL;
-            if (webhookUrl) {
-              log('📡 Using email webhook service');
-              const response = await fetch(webhookUrl, {
+            // Option 1: Resend API (if RESEND_API_KEY is set)
+            if (process.env.RESEND_API_KEY) {
+              log('📡 Using Resend API for email delivery');
+              const response = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  from: fromEmail,
+                  to: [emailData.to],
+                  subject: emailData.subject,
+                  html: emailData.html
+                })
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                log('✅ Email sent via Resend', result);
+                return { success: true, messageId: result.id };
+              } else {
+                const error = await response.text();
+                throw new Error(`Resend API failed: ${response.status} - ${error}`);
+              }
+            }
+            
+            // Option 2: SMTP2GO API (if SMTP2GO_API_KEY is set)
+            if (process.env.SMTP2GO_API_KEY) {
+              log('📡 Using SMTP2GO API for email delivery');
+              const response = await fetch('https://api.smtp2go.com/v3/email/send', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${process.env.SMTP2GO_API_KEY}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  from: fromEmail,
+                  to: [emailData.to],
+                  subject: emailData.subject,
+                  html_body: emailData.html
+                })
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                log('✅ Email sent via SMTP2GO', result);
+                return { success: true, messageId: result.data.message_id };
+              } else {
+                const error = await response.text();
+                throw new Error(`SMTP2GO API failed: ${response.status} - ${error}`);
+              }
+            }
+            
+            // Option 3: Custom webhook (if EMAIL_WEBHOOK_URL is set)
+            if (process.env.EMAIL_WEBHOOK_URL) {
+              log('📡 Using custom email webhook service');
+              const response = await fetch(process.env.EMAIL_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -578,14 +631,15 @@ router.post('/', async (req, res) => {
               }
             }
             
-            // Fallback: Log email details and continue
-            log('📧 Email would be sent (production mode)', {
+            // No HTTP email service configured
+            log('📧 No HTTP email service configured, logging email details', {
               to: emailData.to,
               subject: emailData.subject,
-              htmlLength: emailData.html.length
+              htmlLength: emailData.html.length,
+              availableServices: 'Set RESEND_API_KEY, SMTP2GO_API_KEY, or EMAIL_WEBHOOK_URL'
             });
             
-            return { success: true, messageId: 'mock-' + Date.now() };
+            return { success: true, messageId: 'logged-' + Date.now() };
             
           } catch (error) {
             log('❌ HTTP email failed', { error: error.message });
